@@ -17,9 +17,9 @@ if you copy it without the .sh extension:
 
 ## Usage ##
 
-In command line syntax:
+Basic command line syntax:
 
-    $ sudo sh virtualhost.sh [create | delete] [domain] [optional host_dir]
+    $ sudo sh /path/to/virtualhost.sh [create | delete] [domain] [optional host_dir]
     
 With script installed on /usr/local/bin
 
