@@ -35,3 +35,4 @@ to delete a virtual host with custom directory name
 
   $ sudo virtualhost delete anothersite.dev my_dir
 
+
