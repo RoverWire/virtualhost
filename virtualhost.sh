@@ -67,7 +67,7 @@ if [ "$action" == 'create' ]
 			<Directory />
 				AllowOverride All
 			</Directory>
-			<Directory $rootdir>
+			<Directory $userDir$rootdir>
 				Options Indexes FollowSymLinks MultiViews
 				AllowOverride all
 				Order allow,deny
