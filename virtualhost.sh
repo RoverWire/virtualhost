@@ -8,7 +8,7 @@ email='webmaster@localhost'
 sitesEnable='/etc/apache2/sites-enabled/'
 sitesAvailable='/etc/apache2/sites-available/'
 userDir='/var/www/'
-
+sitesAvailabledomain=$sitesAvailable$domain.conf
 
 ### don't modify from here unless you know what you are doing ####
  
@@ -36,7 +36,7 @@ fi
 if [ "$action" == 'create' ] 
 	then
 		### check if domain already exists
-		if [ -e $sitesAvailable$domain ]; then
+		if [ -e $sitesAvailabledomain ]; then
 			echo -e 'This domain already exists.\nPlease Try Another one'
 			exit;
 		fi
@@ -70,13 +70,12 @@ if [ "$action" == 'create' ]
 			<Directory $userDir$rootdir>
 				Options Indexes FollowSymLinks MultiViews
 				AllowOverride all
-				Order allow,deny
-				allow from all
+				Require all granted
 			</Directory>
 			ErrorLog /var/log/apache2/$domain-error.log
 			LogLevel error
 			CustomLog /var/log/apache2/$domain-access.log combined
-		</VirtualHost>" > $sitesAvailable$domain
+		</VirtualHost>" > $sitesAvailabledomain
 		then
 			echo -e 'There is an ERROR create $domain file'
 			exit;
@@ -110,7 +109,7 @@ if [ "$action" == 'create' ]
 		exit;
 	else
 		### check whether domain already exists
-		if ! [ -e $sitesAvailable$domain ]; then
+		if ! [ -e $sitesAvailabledomain ]; then
 			echo -e 'This domain dont exists.\nPlease Try Another one'
 			exit;
 		else
@@ -125,7 +124,7 @@ if [ "$action" == 'create' ]
 			/etc/init.d/apache2 reload
 
 			### Delete virtual host rules files
-			rm $sitesAvailable$domain
+			rm $sitesAvailabledomain
 		fi
  
 		### check if directory exists or not
