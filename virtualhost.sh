@@ -7,8 +7,8 @@ owner=$(who am i | awk '{print $1}')
 email='webmaster@localhost'
 sitesEnable='/etc/apache2/sites-enabled/'
 sitesAvailable='/etc/apache2/sites-available/'
-userDir='/var/www/'
-
+userDir='/home/darek/public_html/'
+sitesAvailabledomain=$sitesAvailable$domain.conf
 
 ### don't modify from here unless you know what you are doing ####
  
@@ -36,7 +36,7 @@ fi
 if [ "$action" == 'create' ] 
 	then
 		### check if domain already exists
-		if [ -e $sitesAvailable$domain ]; then
+		if [ -e $sitesAvailabledomain ]; then
 			echo -e 'This domain already exists.\nPlease Try Another one'
 			exit;
 		fi
@@ -58,25 +58,23 @@ if [ "$action" == 'create' ]
 		fi
  
 		### create virtual host rules file
-		if ! echo "
-		<VirtualHost *:80>
-			ServerAdmin $email
-			ServerName $domain
-			ServerAlias $domain
-			DocumentRoot $userDir$rootdir
-			<Directory />
-				AllowOverride All
-			</Directory>
-			<Directory $userDir$rootdir>
-				Options Indexes FollowSymLinks MultiViews
-				AllowOverride all
-				Order allow,deny
-				allow from all
-			</Directory>
-			ErrorLog /var/log/apache2/$domain-error.log
-			LogLevel error
-			CustomLog /var/log/apache2/$domain-access.log combined
-		</VirtualHost>" > $sitesAvailable$domain
+		if ! echo "<VirtualHost *:80>
+	ServerAdmin $email
+	ServerName $domain
+	ServerAlias $domain
+	DocumentRoot $userDir$rootdir
+	<Directory />
+		AllowOverride All
+	</Directory>
+	<Directory $userDir$rootdir>
+		Options Indexes FollowSymLinks MultiViews
+		AllowOverride all
+		Require all granted
+	</Directory>
+	ErrorLog /var/log/apache2/$domain-error.log
+	LogLevel error
+	CustomLog /var/log/apache2/$domain-access.log combined
+</VirtualHost>" > $sitesAvailabledomain
 		then
 			echo -e 'There is an ERROR create $domain file'
 			exit;
@@ -110,7 +108,7 @@ if [ "$action" == 'create' ]
 		exit;
 	else
 		### check whether domain already exists
-		if ! [ -e $sitesAvailable$domain ]; then
+		if ! [ -e $sitesAvailabledomain ]; then
 			echo -e 'This domain dont exists.\nPlease Try Another one'
 			exit;
 		else
@@ -125,7 +123,7 @@ if [ "$action" == 'create' ]
 			/etc/init.d/apache2 reload
 
 			### Delete virtual host rules files
-			rm $sitesAvailable$domain
+			rm $sitesAvailabledomain
 		fi
  
 		### check if directory exists or not
