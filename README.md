@@ -15,6 +15,14 @@ if you copy it without the .sh extension:
 
         $ sudo cp /path/to/virtualhost.sh /usr/local/bin/virtualhost
 
+### Installation for lazy webmasters ###
+
+        $ cd /usr/local/bin
+        $ wget -O virtualhost https://raw.githubusercontent.com/RoverWire/virtualhost/master/virtualhost.sh
+        $ chmod +x virtualhost
+        $ wget -O virtualhost-nginx https://raw.githubusercontent.com/RoverWire/virtualhost/master/virtualhost-nginx.sh
+        $ chmod +x virtualhost-nginx
+
 ## Usage ##
 
 Basic command line syntax:
