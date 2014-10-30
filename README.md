@@ -20,7 +20,6 @@ if you copy it without the .sh extension:
         $ cd /usr/local/bin
         $ wget -O virtualhost https://raw.githubusercontent.com/RoverWire/virtualhost/master/virtualhost.sh
         $ chmod +x virtualhost
-Or
         $ wget -O virtualhost-nginx https://raw.githubusercontent.com/RoverWire/virtualhost/master/virtualhost-nginx.sh
         $ chmod +x virtualhost-nginx
 
