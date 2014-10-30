@@ -58,7 +58,7 @@ if [ "$action" == 'create' ]
 	listen   80;
 	root $userDir$rootdir;
 	index index.php index.html index.htm;
-	server_name $domain;
+	server_name $domain www.$domain;
 
 	# serve static files directly
 	location ~* \.(jpg|jpeg|gif|css|png|js|ico|html)$ {
