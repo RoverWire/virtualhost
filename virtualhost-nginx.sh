@@ -1,3 +1,5 @@
+#!/bin/bash
+### Set default parameters
 action=$1
 domain=$2
 rootdir=$3
