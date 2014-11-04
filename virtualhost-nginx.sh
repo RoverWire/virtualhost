@@ -1,7 +1,4 @@
 #!/bin/bash
-### Set Language
-TEXTDOMAIN=virtualhost
-
 ### Set default parameters
 action=$1
 domain=$2
