@@ -1,4 +1,7 @@
 #!/bin/bash
+### Set Language
+TEXTDOMAIN=virtualhost
+
 ### Set default parameters
 action=$1
 domain=$2
@@ -6,10 +9,10 @@ rootdir=$3
 owner=$(who am i | awk '{print $1}')
 sitesEnable='/etc/nginx/sites-enabled/'
 sitesAvailable='/etc/nginx/sites-available/'
-userDir='/srv/'
+userDir='/var/www/'
 
 if [ "$(whoami)" != 'root' ]; then
-  	echo $"You have no permission to run $0 as non-root user. Use sudo"
+	echo $"You have no permission to run $0 as non-root user. Use sudo"
 		exit 1;
 fi
 
@@ -45,58 +48,58 @@ if [ "$action" == 'create' ]
 			chmod 755 $userDir$rootdir
 			### write test file in the new domain dir
 			if ! echo "<?php echo phpinfo(); ?>" > $userDir$rootdir/phpinfo.php
-			then
-				echo $"ERROR: Not able to write in file $userDir/$rootdir/phpinfo.php. Please check permissions."
-				exit;
+				then
+					echo $"ERROR: Not able to write in file $userDir/$rootdir/phpinfo.php. Please check permissions."
+					exit;
 			else
-				echo $"Added content to $userDir$rootdir/phpinfo.php."
+					echo $"Added content to $userDir$rootdir/phpinfo.php."
 			fi
 		fi
 
 		### create virtual host rules file
 		if ! echo "server {
-	listen   80;
-	root $userDir$rootdir;
-	index index.php index.html index.htm;
-	server_name $domain;
+			listen   80;
+			root $userDir$rootdir;
+			index index.php index.html index.htm;
+			server_name $domain;
 
-	# serve static files directly
-	location ~* \.(jpg|jpeg|gif|css|png|js|ico|html)$ {
-		access_log off;
-		expires max;
-	}
+			# serve static files directly
+			location ~* \.(jpg|jpeg|gif|css|png|js|ico|html)$ {
+				access_log off;
+				expires max;
+			}
 
-	# removes trailing slashes (prevents SEO duplicate content issues)
-	if (!-d \$request_filename) {
-		rewrite ^/(.+)/\$ /\$1 permanent;
-	}
+			# removes trailing slashes (prevents SEO duplicate content issues)
+			if (!-d \$request_filename) {
+				rewrite ^/(.+)/\$ /\$1 permanent;
+			}
 
-	# unless the request is for a valid file (image, js, css, etc.), send to bootstrap
-	if (!-e \$request_filename) {
-		rewrite ^/(.*)\$ /index.php?/\$1 last;
-		break;
-	}
+			# unless the request is for a valid file (image, js, css, etc.), send to bootstrap
+			if (!-e \$request_filename) {
+				rewrite ^/(.*)\$ /index.php?/\$1 last;
+				break;
+			}
 
-	# removes trailing 'index' from all controllers
-	if (\$request_uri ~* index/?\$) {
-		rewrite ^/(.*)/index/?\$ /\$1 permanent;
-	}
+			# removes trailing 'index' from all controllers
+			if (\$request_uri ~* index/?\$) {
+				rewrite ^/(.*)/index/?\$ /\$1 permanent;
+			}
 
-	# catch all
-	error_page 404 /index.php;
+			# catch all
+			error_page 404 /index.php;
 
-	location ~ \.php$ {
-		fastcgi_split_path_info ^(.+\.php)(/.+)\$;
-		fastcgi_pass 127.0.0.1:9000;
-		fastcgi_index index.php;
-		include fastcgi_params;
-	}
+			location ~ \.php$ {
+				fastcgi_split_path_info ^(.+\.php)(/.+)\$;
+				fastcgi_pass 127.0.0.1:9000;
+				fastcgi_index index.php;
+				include fastcgi_params;
+			}
 
-	location ~ /\.ht {
-		deny all;
-	}
+			location ~ /\.ht {
+				deny all;
+			}
 
-}" > $sitesAvailable$domain
+		}" > $sitesAvailable$domain
 		then
 			echo -e $"There is an ERROR create $domain file"
 			exit;
@@ -106,11 +109,11 @@ if [ "$action" == 'create' ]
 
 		### Add domain in /etc/hosts
 		if ! echo "127.0.0.1	$domain" >> /etc/hosts
-		then
-			echo $"ERROR: Not able write in /etc/hosts"
-			exit;
+			then
+				echo $"ERROR: Not able write in /etc/hosts"
+				exit;
 		else
-			echo -e $"Host added to /etc/hosts file \n"
+				echo -e $"Host added to /etc/hosts file \n"
 		fi
 
 		if [ "$owner" == ""  ]; then
