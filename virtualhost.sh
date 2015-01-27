@@ -53,10 +53,10 @@ if [ "$action" == 'create' ]
 			### write test file in the new domain dir
 			if ! echo "<?php echo phpinfo(); ?>" > $userDir$rootdir/phpinfo.php
 			then
-				echo $"ERROR: Not able to write in file $userDir/$rootdir/phpinfo.php. Please check permissions."
+				echo $"ERROR: Not able to write in file $userDir/$rootdir/phpinfo.php. Please check permissions"
 				exit;
 			else
-				echo $"Added content to $userDir$rootdir/phpinfo.php."
+				echo $"Added content to $userDir$rootdir/phpinfo.php"
 			fi
 		fi
 
@@ -80,7 +80,7 @@ if [ "$action" == 'create' ]
 			CustomLog /var/log/apache2/$domain-access.log combined
 		</VirtualHost>" > $sitesAvailabledomain
 		then
-			echo -e $"There is an ERROR create $domain file"
+			echo -e $"There is an ERROR creating $domain file"
 			exit;
 		else
 			echo -e $"\nNew Virtual Host Created\n"
@@ -89,7 +89,7 @@ if [ "$action" == 'create' ]
 		### Add domain in /etc/hosts
 		if ! echo "127.0.0.1	$domain" >> /etc/hosts
 		then
-			echo $"ERROR: Not able write in /etc/hosts"
+			echo $"ERROR: Not able to write in /etc/hosts"
 			exit;
 		else
 			echo -e $"Host added to /etc/hosts file \n"
@@ -113,7 +113,7 @@ if [ "$action" == 'create' ]
 	else
 		### check whether domain already exists
 		if ! [ -e $sitesAvailabledomain ]; then
-			echo -e $"This domain dont exists.\nPlease Try Another one"
+			echo -e $"This domain does not exist.\nPlease try another one"
 			exit;
 		else
 			### Delete domain in /etc/hosts
@@ -132,10 +132,10 @@ if [ "$action" == 'create' ]
 
 		### check if directory exists or not
 		if [ -d $userDir$rootdir ]; then
-			echo -e $"Delete host root directory ? (s/n)"
+			echo -e $"Delete host root directory ? (y/n)"
 			read deldir
 
-			if [ "$deldir" == 's' -o "$deldir" == 'S' ]; then
+			if [ "$deldir" == 'y' -o "$deldir" == 'Y' ]; then
 				### Delete the directory
 				rm -rf $userDir$rootdir
 				echo -e $"Directory deleted"
