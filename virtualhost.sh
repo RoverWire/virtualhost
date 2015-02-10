@@ -16,7 +16,7 @@ sitesAvailabledomain=$sitesAvailable$domain.conf
 ### don't modify from here unless you know what you are doing ####
 
 if [ "$(whoami)" != 'root' ]; then
-  	echo $"You have no permission to run $0 as non-root user. Use sudo"
+	echo $"You have no permission to run $0 as non-root user. Use sudo"
 		exit 1;
 fi
 
@@ -26,10 +26,10 @@ if [ "$action" != 'create' ] && [ "$action" != 'delete' ]
 		exit 1;
 fi
 
-while [ "$domain" == ""  ]
+while [ "$domain" == "" ]
 do
 	echo -e $"Please provide domain. e.g.dev,staging"
-	read  domain
+	read domain
 done
 
 if [ "$rootdir" == "" ]; then
@@ -95,7 +95,7 @@ if [ "$action" == 'create' ]
 			echo -e $"Host added to /etc/hosts file \n"
 		fi
 
-		if [ "$owner" == ""  ]; then
+		if [ "$owner" == "" ]; then
 			chown -R $(whoami):$(whoami) $userDir$rootdir
 		else
 			chown -R $owner:$owner $userDir$rootdir
