@@ -6,6 +6,7 @@ TEXTDOMAIN=virtualhost
 action=$1
 domain=$2
 rootdir=$3
+customdir=$4
 owner=$(who am i | awk '{print $1}')
 email='webmaster@localhost'
 sitesEnable='/etc/apache2/sites-enabled/'
@@ -35,6 +36,10 @@ done
 if [ "$rootdir" == "" ]; then
 	rootdir=${domain//./}
 fi
+if [ "$customdir" != "" ]; then
+	userDir=$customdir
+fi
+
 
 if [ "$action" == 'create' ]
 	then
