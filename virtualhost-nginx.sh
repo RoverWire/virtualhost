@@ -5,7 +5,7 @@ TEXTDOMAIN=virtualhost
 ### Set default parameters
 action=$1
 domain=$2
-rootdir=$3
+rootDir=$3
 owner=$(who am i | awk '{print $1}')
 sitesEnable='/etc/nginx/sites-enabled/'
 sitesAvailable='/etc/nginx/sites-available/'
@@ -28,9 +28,16 @@ do
 	read domain
 done
 
-if [ "$rootdir" == "" ]; then
-	rootdir=${domain//./}
+if [ "$rootDir" == "" ]; then
+	rootDir=${domain//./}
 fi
+
+### if root dir starts with '/', don't use /var/www as default starting point
+if [[ "$rootDir" =~ ^/ ]]; then
+	userDir=''
+fi
+
+rootDir=$userDir$rootDir
 
 if [ "$action" == 'create' ]
 	then
@@ -41,25 +48,25 @@ if [ "$action" == 'create' ]
 		fi
 
 		### check if directory exists or not
-		if ! [ -d $userDir$rootdir ]; then
+		if ! [ -d $userDir$rootDir ]; then
 			### create the directory
-			mkdir $userDir$rootdir
+			mkdir $userDir$rootDir
 			### give permission to root dir
-			chmod 755 $userDir$rootdir
+			chmod 755 $userDir$rootDir
 			### write test file in the new domain dir
-			if ! echo "<?php echo phpinfo(); ?>" > $userDir$rootdir/phpinfo.php
+			if ! echo "<?php echo phpinfo(); ?>" > $userDir$rootDir/phpinfo.php
 				then
-					echo $"ERROR: Not able to write in file $userDir/$rootdir/phpinfo.php. Please check permissions."
+					echo $"ERROR: Not able to write in file $userDir/$rootDir/phpinfo.php. Please check permissions."
 					exit;
 			else
-					echo $"Added content to $userDir$rootdir/phpinfo.php."
+					echo $"Added content to $userDir$rootDir/phpinfo.php."
 			fi
 		fi
 
 		### create virtual host rules file
 		if ! echo "server {
 			listen   80;
-			root $userDir$rootdir;
+			root $userDir$rootDir;
 			index index.php index.html index.htm;
 			server_name $domain;
 
@@ -117,9 +124,9 @@ if [ "$action" == 'create' ]
 		fi
 
 		if [ "$owner" == "" ]; then
-			chown -R $(whoami):www-data $userDir$rootdir
+			chown -R $(whoami):www-data $userDir$rootDir
 		else
-			chown -R $owner:www-data $userDir$rootdir
+			chown -R $owner:www-data $userDir$rootDir
 		fi
 
 		### enable website
@@ -129,7 +136,7 @@ if [ "$action" == 'create' ]
 		service nginx restart
 
 		### show the finished message
-		echo -e $"Complete! \nYou now have a new Virtual Host \nYour new host is: http://$domain \nAnd its located at $userDir$rootdir"
+		echo -e $"Complete! \nYou now have a new Virtual Host \nYour new host is: http://$domain \nAnd its located at $userDir$rootDir"
 		exit;
 	else
 		### check whether domain already exists
@@ -152,13 +159,13 @@ if [ "$action" == 'create' ]
 		fi
 
 		### check if directory exists or not
-		if [ -d $userDir$rootdir ]; then
+		if [ -d $userDir$rootDir ]; then
 			echo -e $"Delete host root directory ? (s/n)"
 			read deldir
 
 			if [ "$deldir" == 's' -o "$deldir" == 'S' ]; then
 				### Delete the directory
-				rm -rf $userDir$rootdir
+				rm -rf $userDir$rootDir
 				echo -e $"Directory deleted"
 			else
 				echo -e $"Host directory conserved"
