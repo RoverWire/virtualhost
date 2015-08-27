@@ -33,7 +33,7 @@ do
 done
 
 if [ "$rootDir" == "" ]; then
-	rootdir=${domain//./}
+	rootDir=${domain//./}
 fi
 
 ### if root dir starts with '/', don't use /var/www as default starting point
@@ -60,7 +60,7 @@ if [ "$action" == 'create' ]
 			### write test file in the new domain dir
 			if ! echo "<?php echo phpinfo(); ?>" > $rootDir/phpinfo.php
 			then
-				echo $"ERROR: Not able to write in file $userDir/$rootdir/phpinfo.php. Please check permissions"
+				echo $"ERROR: Not able to write in file $userDir/$rootDir/phpinfo.php. Please check permissions"
 				exit;
 			else
 				echo $"Added content to $rootDir/phpinfo.php"
