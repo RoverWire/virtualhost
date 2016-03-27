@@ -72,7 +72,7 @@ if [ "$action" == 'create' ]
 		<VirtualHost *:80>
 			ServerAdmin $email
 			ServerName $domain
-			ServerAlias $domain
+			ServerAlias www.$domain
 			DocumentRoot $rootDir
 			<Directory />
 				AllowOverride All
