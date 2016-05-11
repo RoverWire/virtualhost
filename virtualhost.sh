@@ -69,7 +69,7 @@ if [ "$action" == 'create' ]
 
 		### create virtual host rules file
 		if ! echo "
-		<VirtualHost *:80>
+		<VirtualHost 127.0.0.1:80>
 			ServerAdmin $email
 			ServerName $domain
 			ServerAlias $domain
