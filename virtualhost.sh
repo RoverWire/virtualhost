@@ -6,6 +6,7 @@ TEXTDOMAIN=virtualhost
 action=$1
 domain=$2
 rootDir=$3
+
 owner=$(who am i | awk '{print $1}')
 email='webmaster@localhost'
 sitesEnable='/etc/apache2/sites-enabled/'
@@ -41,6 +42,14 @@ if [[ "$rootDir" =~ ^/ ]]; then
 	userDir=''
 fi
 
+### if IP Address not specify, use detault IP Address
+if [[ -z "$4" ]]
+	then
+		ipAddress="127.0.0.1"
+	else
+		ipAddress="$4"
+fi
+
 rootDir=$userDir$rootDir
 
 if [ "$action" == 'create' ]
@@ -68,24 +77,64 @@ if [ "$action" == 'create' ]
 		fi
 
 		### create virtual host rules file
-		if ! echo "
-		<VirtualHost *:80>
-			ServerAdmin $email
-			ServerName $domain
-			ServerAlias $domain
-			DocumentRoot $rootDir
-			<Directory />
-				AllowOverride All
-			</Directory>
-			<Directory $rootDir>
-				Options Indexes FollowSymLinks MultiViews
-				AllowOverride all
-				Require all granted
-			</Directory>
-			ErrorLog /var/log/apache2/$domain-error.log
-			LogLevel error
-			CustomLog /var/log/apache2/$domain-access.log combined
-		</VirtualHost>" > $sitesAvailabledomain
+		if ! echo '
+<VirtualHost '$ipAddress':80>
+	ServerAdmin '$email'
+    ServerName '$domain'
+    ServerAlias '$domain'
+    DocumentRoot '$rootDir'
+	<Directory />
+		AllowOverride All
+	</Directory>
+	<Directory '$rootDir'>
+		Options Indexes FollowSymLinks MultiViews
+		AllowOverride all
+		Require all granted
+	</Directory>
+	ErrorLog /var/log/apache2/'$domain'-error.log
+	LogLevel error
+	CustomLog /var/log/apache2/'$domain'-access.log combined
+</VirtualHost>
+<IfModule mod_ssl.c>
+    <VirtualHost _default_:443>
+    
+        ServerAdmin '$email'
+        ServerName '$domain'
+        
+        DocumentRoot '$rootDir'
+        
+        ErrorLog ${APACHE_LOG_DIR}/'$domain'-ssl-error.log
+        CustomLog ${APACHE_LOG_DIR}/'$domain'-ssl-access.log combined
+        
+        SSLEngine on
+        SSLCertificateFile /etc/apache2/ssl/'$domain'.crt
+        SSLCertificateKeyFile /etc/apache2/ssl/'$domain'.key
+
+        <Directory />
+			AllowOverride All
+		</Directory>
+		<Directory '$rootDir'>
+			Options Indexes FollowSymLinks MultiViews
+			AllowOverride all
+			Require all granted
+		</Directory>
+
+        <FilesMatch "\.(cgi|shtml|phtml|php)$">
+                        SSLOptions +StdEnvVars
+        </FilesMatch>
+
+        <Directory /usr/lib/cgi-bin>
+                        SSLOptions +StdEnvVars
+        </Directory>
+
+        BrowserMatch "MSIE [2-6]" \
+                        nokeepalive ssl-unclean-shutdown \
+                        downgrade-1.0 force-response-1.0
+        BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
+
+    </VirtualHost>
+</IfModule>
+' > $sitesAvailabledomain
 		then
 			echo -e $"There is an ERROR creating $domain file"
 			exit;
@@ -112,7 +161,7 @@ if [ "$action" == 'create' ]
 		a2ensite $domain
 
 		### restart Apache
-		/etc/init.d/apache2 reload
+		/etc/init.d/apache2 restart
 
 		### show the finished message
 		echo -e $"Complete! \nYou now have a new Virtual Host \nYour new host is: http://$domain \nAnd its located at $rootDir"
