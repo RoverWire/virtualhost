@@ -27,11 +27,11 @@ if you copy it without the .sh extension:
 
 Basic command line syntax:
 
-    $ sudo sh /path/to/virtualhost.sh [create | delete] [domain] [optional host_dir]
+    $ sudo sh /path/to/virtualhost.sh [create | delete] [domain] [optional host_dir] [optional ip_address]
 
 With script installed on /usr/local/bin
 
-    $ sudo virtualhost [create | delete] [domain] [optional host_dir]
+    $ sudo virtualhost [create | delete] [domain] [optional host_dir] [optional ip_address]
 
 
 ### Examples ###
@@ -43,6 +43,10 @@ to create a new virtual host:
 to create a new virtual host with custom directory name:
 
     $ sudo virtualhost create anothersite.dev my_dir
+
+to create a new virtual host with custom directory name and IP Address:
+
+    $ sudo virtualhost create anothersite.dev my_dir 127.0.0.2
 
 to delete a virtual host
 

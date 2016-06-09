@@ -6,7 +6,7 @@ TEXTDOMAIN=virtualhost
 action=$1
 domain=$2
 rootDir=$3
-ipAddress=$4
+
 owner=$(who am i | awk '{print $1}')
 email='webmaster@localhost'
 sitesEnable='/etc/apache2/sites-enabled/'
@@ -40,6 +40,14 @@ fi
 ### if root dir starts with '/', don't use /var/www as default starting point
 if [[ "$rootDir" =~ ^/ ]]; then
 	userDir=''
+fi
+
+### if IP Address not specify, use detault IP Address
+if [[ -z "$4" ]]
+	then
+		ipAddress="127.0.0.1"
+	else
+		ipAddress="$4"
 fi
 
 rootDir=$userDir$rootDir
