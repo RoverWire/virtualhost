@@ -27,7 +27,7 @@ if you copy it without the .sh extension:
 
 Basic command line syntax:
 
-    $ sudo sh /path/to/virtualhost.sh [create | delete] [domain] [optional host_dir]
+    $ sudo bash /path/to/virtualhost.sh [create | delete] [domain] [optional host_dir]
 
 With script installed on /usr/local/bin
 
