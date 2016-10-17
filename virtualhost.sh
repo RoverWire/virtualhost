@@ -6,6 +6,8 @@ TEXTDOMAIN=virtualhost
 action=$1
 domain=$2
 rootDir=$3
+serverAlias=$4
+
 owner=$(who am i | awk '{print $1}')
 email='webmaster@localhost'
 sitesEnable='/etc/apache2/sites-enabled/'
@@ -43,6 +45,13 @@ fi
 
 rootDir=$userDir$rootDir
 
+### add an optional server alias, for example www.host.it
+if [ "$serverAlias" != "" ]; then
+	optionalAlias='ServerAlias '$serverAlias
+else
+        optionalAlias=''
+fi
+
 if [ "$action" == 'create' ]
 	then
 		### check if domain already exists
@@ -72,7 +81,7 @@ if [ "$action" == 'create' ]
 		<VirtualHost *:80>
 			ServerAdmin $email
 			ServerName $domain
-			ServerAlias www.$domain
+			$optionalAlias
 			DocumentRoot $rootDir
 			<Directory />
 				AllowOverride All
