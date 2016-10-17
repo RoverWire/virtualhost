@@ -37,8 +37,6 @@ if [[ "$rootDir" =~ ^/ ]]; then
 	userDir=''
 fi
 
-rootDir=$userDir$rootDir
-
 if [ "$action" == 'create' ]
 	then
 		### check if domain already exists
