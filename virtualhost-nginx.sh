@@ -6,6 +6,7 @@ TEXTDOMAIN=virtualhost
 action=$1
 domain=$2
 rootDir=$3
+serverAlias=$4
 owner=$(who am i | awk '{print $1}')
 sitesEnable='/etc/nginx/sites-enabled/'
 sitesAvailable='/etc/nginx/sites-available/'
@@ -37,7 +38,12 @@ if [[ "$rootDir" =~ ^/ ]]; then
 	userDir=''
 fi
 
-rootDir=$userDir$rootDir
+### add an optional server alias, for example www.host.it
+if [ "$serverAlias" != "" ]; then
+	optionalAlias=' '$serverAlias
+else
+        optionalAlias=''
+fi
 
 if [ "$action" == 'create' ]
 	then
@@ -68,7 +74,7 @@ if [ "$action" == 'create' ]
 			listen   80;
 			root $userDir$rootDir;
 			index index.php index.html index.htm;
-			server_name $domain;
+			server_name $domain$optionalAlias;
 
 			# serve static files directly
 			location ~* \.(jpg|jpeg|gif|css|png|js|ico|html)$ {
