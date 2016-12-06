@@ -1,0 +1,60 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Virtualhost Manage Script \n"
+"Last-Translator: Eugene Chechulin <eugene.chechulin@gmail.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: ru_RU\n""
+
+#: virtualhost.sh:19
+msgid "You have no permission to run $0 as non-root user. Use sudo"
+msgstr "Вы не root пользователь и у Вас нет прав для запуска $0. Используйте sudo."
+#: virtualhost.sh:25
+msgid "You need to prompt for action (create or delete) -- Lower-case only"
+msgstr "Вам необходимо выбрать действие (create или delete) -- Набирать в нижнем регистре."
+#: virtualhost.sh:31
+msgid "Please provide domain. e.g.dev,staging"
+msgstr "Пожалуйста укажите доменное имя. Например test.dev"
+#: virtualhost.sh:43
+msgid "This domain already exists.\\nPlease Try Another one"
+msgstr "Это доменное имя уже используется, пожалуйста укажите другое."
+#: virtualhost.sh:56
+msgid "ERROR: Not able to write in file $userDir/$rootdir/phpinfo.php. Please check permissions."
+msgstr "ОШИБКА: Нельзя выполнить запись в $userDir/$rootdir/phpinfo.php. Проверьте права."
+#: virtualhost.sh:59
+msgid "Added content to $userDir$rootdir/phpinfo.php."
+msgstr "Контент добавлен в $userDir$rootdir/phpinfo.php."
+#: virtualhost.sh:83
+msgid "There is an ERROR create $domain file"
+msgstr "Ошибка при создании $domain"
+#: virtualhost.sh:86
+msgid "\\nNew Virtual Host Created\\n"
+msgstr "\\nНовый виртуальный хост создан.\\n"
+#: virtualhost.sh:92
+msgid "ERROR: Not able write in /etc/hosts"
+msgstr "ОШИБКА: Нельзя записать в /etc/hosts. Проверьте права."
+#: virtualhost.sh:95
+msgid "Host added to /etc/hosts file \\n"
+msgstr "Домен добавлен в /etc/hosts file \\n"
+#: virtualhost.sh:111
+msgid "Complete! \\nYou now have a new Virtual Host \\nYour new host is: http://$domain \\nAnd its located at $userDir$rootdir"
+msgstr "Готово! \\nУ Вас есть новый виртуальный хост \\nВаш новый хост: http://$domain \\nКоторый распологается в $userDir$rootdir"
+#: virtualhost.sh:116
+msgid "This domain dont exists.\\nPlease Try Another one"
+msgstr "Этот домен не создан.\\nПопробуйте другой"
+#: virtualhost.sh:135
+msgid "Delete host root directory ? (s/n)"
+msgstr "Удалить директорию хоста ? (s/n)"
+#: virtualhost.sh:141
+msgid "Directory deleted"
+msgstr "Директория удалена"
+#: virtualhost.sh:143
+msgid "Host directory conserved"
+msgstr "Каталог хоста сохранен"
+#: virtualhost.sh:146
+msgid "Host directory not found. Ignored"
+msgstr "Директория хоста не найдена. Проигнорировано"
+#: virtualhost.sh:150
+msgid "Complete!\\nYou just removed Virtual Host $domain"
+msgstr "Готово!\\nВы только что удалили $domain"
