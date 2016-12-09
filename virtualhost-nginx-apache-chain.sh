@@ -132,7 +132,7 @@ if [ "$action" == 'create' ]
 			RemoteIPHeader X-Forwarded-For
 			RemoteIPTrustedProxy 127.0.0.1
 			</IfModule>
-		" > $apacheSitesAvailable$domain
+		" > $apacheSitesAvailable$domain.conf
 		then
 			echo -e $"There is an ERROR create Apache $domain file"
 			exit;
@@ -159,7 +159,7 @@ if [ "$action" == 'create' ]
 		ln -s $nginxSitesAvailable$domain $nginxSitesEnable$domain
 
 		### enable Apache website
-		ln -s $apacheSitesAvailable$domain $apacheSitesEnable$domain
+		ln -s $apacheSitesAvailable$domain.conf $apacheSitesEnable$domain.conf
 
 		### restart Nginx
 		service nginx restart
