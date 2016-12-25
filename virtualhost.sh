@@ -111,6 +111,17 @@ if [ "$action" == 'create' ]
 		### enable website
 		a2ensite $domain
 
+		### Enabling AllowOverride for .htaccess
+		sudo a2enmod rewrite
+
+		if ! echo "Options -Indexes" > $rootDir/.htaccess
+		then
+			echo $"ERROR: Not able to write in file $rootDir/.htaccess. Please check permissions"
+			exit;
+		else
+			echo $"Added content to $rootDir/.htaccess"
+		fi
+
 		### restart Apache
 		/etc/init.d/apache2 reload
 
