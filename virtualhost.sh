@@ -107,7 +107,7 @@ if [ "$action" == 'create' ]
 		then
 			if ! echo "127.0.0.1	$domain" >> /mnt/c/Windows/System32/drivers/etc/hosts
 			then
-				echo $"ERROR: Not able to write in /mnt/c/Windows/System32/drivers/etc/hosts"
+				echo $"ERROR: Not able to write in /mnt/c/Windows/System32/drivers/etc/hosts (Hint: Try running Bash as administrator)"
 			else
 				echo -e $"Host added to /mnt/c/Windows/System32/drivers/etc/hosts file \n"
 			fi
