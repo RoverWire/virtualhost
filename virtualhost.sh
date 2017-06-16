@@ -102,6 +102,17 @@ if [ "$action" == 'create' ]
 			echo -e $"Host added to /etc/hosts file \n"
 		fi
 
+        ### Add domain in /mnt/c/Windows/System32/drivers/etc/hosts (Windows Subsytem for Linux)
+        if [ -e /mnt/c/Windows/System32/drivers/etc/hosts ]
+        then
+            if ! echo "127.0.0.1	$domain" >> /mnt/c/Windows/System32/drivers/etc/hosts
+            then
+                echo $"ERROR: Not able to write in /mnt/c/Windows/System32/drivers/etc/hosts"
+            else
+                echo -e $"Host added to /mnt/c/Windows/System32/drivers/etc/hosts file \n"
+            fi
+        fi
+
 		if [ "$owner" == "" ]; then
 			chown -R $(whoami):$(whoami) $rootDir
 		else
@@ -126,6 +137,13 @@ if [ "$action" == 'create' ]
 			### Delete domain in /etc/hosts
 			newhost=${domain//./\\.}
 			sed -i "/$newhost/d" /etc/hosts
+
+            ### Delete domain in /mnt/c/Windows/System32/drivers/etc/hosts (Windows Subsytem for Linux)
+            if [ -e /mnt/c/Windows/System32/drivers/etc/hosts ]
+            then
+                newhost=${domain//./\\.}
+    			sed -i "/$newhost/d" /mnt/c/Windows/System32/drivers/etc/hosts
+            fi
 
 			### disable website
 			a2dissite $domain
