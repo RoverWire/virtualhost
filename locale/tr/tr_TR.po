@@ -1,0 +1,91 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Virtualhost Manage Script\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Language-Team: \n"
+"X-Generator: Poedit 1.8.7.1\n"
+"Last-Translator: \n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: tr_TR\n"
+
+#: virtualhost.sh:19
+msgid "You have no permission to run $0 as non-root user. Use sudo"
+msgstr "$0 olarak root yetkilerine sahip değilsiniz . Sudo kullan"
+
+#: virtualhost.sh:25
+msgid "You need to prompt for action (create or delete) -- Lower-case only"
+msgstr ""
+"Eylem oluşturmak için create yada delete komutlarını kullanın -- Sadece "
+"küçük harf"
+
+#: virtualhost.sh:31
+msgid "Please provide domain. e.g.dev,staging"
+msgstr "Lütfen alan adı sağlayın. e.g.dev,staging"
+
+#: virtualhost.sh:43
+msgid "This domain already exists.\\nPlease Try Another one"
+msgstr "Bu alan adı zaten mevcut.\\ Lütfen başka bir tane deneyin"
+
+#: virtualhost.sh:56
+msgid ""
+"ERROR: Not able to write in file $userDir/$rootdir/phpinfo.php. Please check "
+"permissions."
+msgstr ""
+"HATA: $userDir/$rootdir/ dizinine phpinfo.php dosyası yazılamıyor. Lütfen "
+"izinleri kontrol edin."
+
+#: virtualhost.sh:59
+msgid "Added content to $userDir$rootdir/phpinfo.php."
+msgstr "$userDir$rootdir dizinine phpinfo.php eklendi."
+
+#: virtualhost.sh:83
+msgid "There is an ERROR create $domain file"
+msgstr "$domain dosyası oluşturmada bir hata var"
+
+#: virtualhost.sh:86
+msgid "\\nNew Virtual Host Created\\n"
+msgstr "\\nYeni Sanal Sunucu Oluşturuldu\\n"
+
+#: virtualhost.sh:92
+msgid "ERROR: Not able write in /etc/hosts"
+msgstr "HATA: /etc/hosts dosyasına yazılamıyor"
+
+#: virtualhost.sh:95
+msgid "Host added to /etc/hosts file \\n"
+msgstr "Sanal Sunucu /etc/hosts dosyasına eklendi \\n"
+
+#: virtualhost.sh:111
+msgid ""
+"Complete! \\nYou now have a new Virtual Host \\nYour new host is: http://"
+"$domain \\nAnd its located at $userDir$rootdir"
+msgstr ""
+"Tamamlandı! Artık yeni bir sanal sunucunuz var \\nYeni sanal sunucun: http://"
+"$domain \\n ve $userDir$rootdir klasöründe barınıyor"
+
+#: virtualhost.sh:116
+msgid "This domain dont exists.\\nPlease Try Another one"
+msgstr "Bu alan adı mevcut değil.\\ Lütfen başka bir tane deneyin."
+
+#: virtualhost.sh:135
+msgid "Delete host root directory ? (s/n)"
+msgstr "Ana makina kök dizini silinsin mi? (e/H)"
+
+#: virtualhost.sh:141
+msgid "Directory deleted"
+msgstr "Dizin silindi"
+
+#: virtualhost.sh:143
+msgid "Host directory conserved"
+msgstr "Ana makina dizini korunmuştur"
+
+#: virtualhost.sh:146
+msgid "Host directory not found. Ignored"
+msgstr "Ana makina dizini bulunamadı. ( Yok sayılan )"
+
+#: virtualhost.sh:150
+msgid "Complete!\\nYou just removed Virtual Host $domain"
+msgstr "Tamamlandı!\\n Sadece $domain sanal sunucusunu kaldırdınız"
