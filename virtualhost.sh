@@ -6,11 +6,21 @@ TEXTDOMAIN=virtualhost
 action=$1
 domain=$2
 rootDir=$3
+nameDir=$4
 owner=$(who am i | awk '{print $1}')
 email='webmaster@localhost'
 sitesEnable='/etc/apache2/sites-enabled/'
 sitesAvailable='/etc/apache2/sites-available/'
-userDir='/var/www/'
+
+localPath='/var/www/html/'
+
+if [ -f "$localPath" ]
+then
+	userDir='/var/www/html/'
+else
+	userDir='/var/www/'
+fi
+
 sitesAvailabledomain=$sitesAvailable$domain.conf
 
 ### don't modify from here unless you know what you are doing ####
@@ -73,7 +83,7 @@ if [ "$action" == 'create' ]
 			ServerAdmin $email
 			ServerName $domain
 			ServerAlias $domain
-			DocumentRoot $rootDir
+			DocumentRoot $nameDir
 			<Directory />
 				AllowOverride All
 			</Directory>
