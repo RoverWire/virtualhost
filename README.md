@@ -66,6 +66,15 @@ to delete a virtual host with custom directory name:
 ```
 $ sudo virtualhost delete anothersite.dev my_dir
 ```
+
+### Ubuntu 16.04 LTS ###
+
+To create a new virtual host (basic command line syntax):
+
+```bash
+$ sudo ./virtualhost.sh create test.domain.local my_dir
+```
+
 ### Localization
 
 For Apache:

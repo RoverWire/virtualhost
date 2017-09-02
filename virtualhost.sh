@@ -11,6 +11,7 @@ email='webmaster@localhost'
 sitesEnable='/etc/apache2/sites-enabled/'
 sitesAvailable='/etc/apache2/sites-available/'
 userDir='/var/www/'
+appFiles='public_html'
 sitesAvailabledomain=$sitesAvailable$domain.conf
 
 ### don't modify from here unless you know what you are doing ####
@@ -33,7 +34,7 @@ do
 done
 
 if [ "$rootDir" == "" ]; then
-	rootDir=${domain//./}
+	rootDir=$domain
 fi
 
 ### if root dir starts with '/', don't use /var/www as default starting point
@@ -42,6 +43,7 @@ if [[ "$rootDir" =~ ^/ ]]; then
 fi
 
 rootDir=$userDir$rootDir
+publicHtml=$rootDir/$appFiles
 
 if [ "$action" == 'create' ]
 	then
@@ -57,8 +59,14 @@ if [ "$action" == 'create' ]
 			mkdir $rootDir
 			### give permission to root dir
 			chmod 755 $rootDir
+
+			### create the directory
+			mkdir $rootDir/$appFiles
+			### give permission to root dir
+			chmod 755 $rootDir/$appFiles
+
 			### write test file in the new domain dir
-			if ! echo "<?php echo phpinfo(); ?>" > $rootDir/phpinfo.php
+			if ! echo "<?php echo phpinfo(); ?>" > $rootDir/$appFiles/phpinfo.php
 			then
 				echo $"ERROR: Not able to write in file $rootDir/phpinfo.php. Please check permissions"
 				exit;
@@ -73,18 +81,18 @@ if [ "$action" == 'create' ]
 			ServerAdmin $email
 			ServerName $domain
 			ServerAlias $domain
-			DocumentRoot $rootDir
+			DocumentRoot $publicHtml
 			<Directory />
 				AllowOverride All
 			</Directory>
-			<Directory $rootDir>
+			<Directory $publicHtml>
 				Options Indexes FollowSymLinks MultiViews
 				AllowOverride all
 				Require all granted
 			</Directory>
-			ErrorLog /var/log/apache2/$domain-error.log
+			ErrorLog $rootDir/error.log
 			LogLevel error
-			CustomLog /var/log/apache2/$domain-access.log combined
+			CustomLog $rootDir/access.log combined
 		</VirtualHost>" > $sitesAvailabledomain
 		then
 			echo -e $"There is an ERROR creating $domain file"
