@@ -7,8 +7,9 @@ action=$1
 domain=$2
 rootDir=$3
 owner=$(who am i | awk '{print $1}')
+apacheUser=$(ps -ef | egrep '(httpd|apache2|apache)' | grep -v root | head -n1 | awk '{print $1}')
 email='webmaster@localhost'
-sitesEnable='/etc/apache2/sites-enabled/'
+sitesEnabled='/etc/apache2/sites-enabled/'
 sitesAvailable='/etc/apache2/sites-available/'
 userDir='/var/www/'
 sitesAvailabledomain=$sitesAvailable$domain.conf
@@ -103,7 +104,12 @@ if [ "$action" == 'create' ]
 		fi
 
 		if [ "$owner" == "" ]; then
-			chown -R $(whoami):$(whoami) $rootDir
+			iam=$(whoami)
+			if [ "$iam" == "root" ]; then
+				chown -R $apacheUser:$apacheUser $rootDir
+			else
+				chown -R $iam:$iam $rootDir
+			fi
 		else
 			chown -R $owner:$owner $rootDir
 		fi
