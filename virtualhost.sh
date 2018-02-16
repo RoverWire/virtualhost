@@ -77,10 +77,10 @@ if [ "$action" == 'create' ]
 
 		### create virtual host rules file
 		if ! echo "
-		<VirtualHost *:80>
+		<VirtualHost *:80 *:443>
 			ServerAdmin $email
 			ServerName $domain
-			ServerAlias $domain
+			ServerAlias www.$domain
 			DocumentRoot $publicHtml
 			<Directory />
 				AllowOverride All
