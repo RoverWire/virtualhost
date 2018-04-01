@@ -1,0 +1,91 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Virtualhost Manage Script NGINX\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Language-Team: Tanju Yıldız <ben@tanjuyildiz.com>\n"
+"X-Generator: Poedit 1.8.7.1\n"
+"Last-Translator: \n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: tr_TR\n"
+"X-Poedit-Basepath: ../..\n"
+"X-Poedit-SearchPath-0: virtualhost-nginx.sh\n"
+
+#: virtualhost-nginx.sh:15
+msgid "You have no permission to run $0 as non-root user. Use sudo"
+msgstr "$0 komutunu, yönetici olmadan çalıştırma izniniz yok. 'sudo' kullanın."
+
+#: virtualhost-nginx.sh:21
+msgid "You need to prompt for action (create or delete) -- Lower-case only"
+msgstr "İşlem için komut (create veya delete) gerekir -- yalnızca küçük harf"
+
+#: virtualhost-nginx.sh:27
+msgid "Please provide domain. e.g.dev,staging"
+msgstr "Lütfen alan adı giriniz. Örn: ornekproje.dev"
+
+#: virtualhost-nginx.sh:39
+msgid "This domain already exists.\\nPlease Try Another one"
+msgstr "Bu alan adı zaten var.\\nLütfen farklı bir alan adı giriniz."
+
+#: virtualhost-nginx.sh:52
+msgid ""
+"ERROR: Not able to write in file $userDir/$rootdir/phpinfo.php. Please check "
+"permissions."
+msgstr ""
+"HATA: $userDir/$rootdir/phpinfo.php dosyası yazılabilir değil. Lütfen "
+"izinleri kontrol ediniz."
+
+#: virtualhost-nginx.sh:55
+msgid "Added content to $userDir$rootdir/phpinfo.php."
+msgstr "$userDir$rootdir/phpinfo.php dosyasına içerik eklendi."
+
+#: virtualhost-nginx.sh:104
+msgid "There is an ERROR create $domain file"
+msgstr "$domain dosyası oluşturulurken bir HATA oluştu."
+
+#: virtualhost-nginx.sh:107
+msgid "\\nNew Virtual Host Created\\n"
+msgstr "\\nYeni Sanal Sunucu Oluşturuldu\\n"
+
+#: virtualhost-nginx.sh:113
+msgid "ERROR: Not able write in /etc/hosts"
+msgstr "HATA: /etc/hosts yazılabilir değil."
+
+#: virtualhost-nginx.sh:116
+msgid "Host added to /etc/hosts file \\n"
+msgstr "Sanal sunucu, /etc/hosts dosyasına eklendi.\\n"
+
+#: virtualhost-nginx.sh:132
+msgid ""
+"Complete! \\nYou now have a new Virtual Host \\nYour new host is: http://"
+"$domain \\nAnd its located at $userDir$rootdir"
+msgstr ""
+"İşlem tamamlandı!\\nYeni bir sanal sunucunuz var.\\nSanal sunucu adresiniz: "
+"http://$domain\\nSanal sunucu dizini: $userDir$rootdir"
+
+#: virtualhost-nginx.sh:137
+msgid "This domain dont exists.\\nPlease Try Another one"
+msgstr "Bu alan adı mevcut değil.\\nLütfen farklı bir alan adı giriniz."
+
+#: virtualhost-nginx.sh:156
+msgid "Delete host root directory ? (s/n)"
+msgstr "anal sunucu kök dizini silinsin mi? (y/n)"
+
+#: virtualhost-nginx.sh:162
+msgid "Directory deleted"
+msgstr "Dizin silindi."
+
+#: virtualhost-nginx.sh:164
+msgid "Host directory conserved"
+msgstr "Sanal sunucu dizini bırakıldı."
+
+#: virtualhost-nginx.sh:167
+msgid "Host directory not found. Ignored"
+msgstr "Sanal sunucu dizini bulunamadı. İşlem yok sayıldı."
+
+#: virtualhost-nginx.sh:171
+msgid "Complete!\\nYou just removed Virtual Host $domain"
+msgstr "İşlem tamamlandı!\\\\n$domain sanal sunucusu kaldırıldı."

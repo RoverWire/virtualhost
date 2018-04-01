@@ -7,8 +7,9 @@ action=$1
 domain=$2
 rootDir=$3
 owner=$(who am i | awk '{print $1}')
+apacheUser=$(ps -ef | egrep '(httpd|apache2|apache)' | grep -v root | head -n1 | awk '{print $1}')
 email='webmaster@localhost'
-sitesEnable='/etc/apache2/sites-enabled/'
+sitesEnabled='/etc/apache2/sites-enabled/'
 sitesAvailable='/etc/apache2/sites-available/'
 userDir='/var/www/'
 sitesAvailabledomain=$sitesAvailable$domain.conf
@@ -102,8 +103,24 @@ if [ "$action" == 'create' ]
 			echo -e $"Host added to /etc/hosts file \n"
 		fi
 
+		### Add domain in /mnt/c/Windows/System32/drivers/etc/hosts (Windows Subsytem for Linux)
+		if [ -e /mnt/c/Windows/System32/drivers/etc/hosts ]
+		then
+			if ! echo -e "\r127.0.0.1       $domain" >> /mnt/c/Windows/System32/drivers/etc/hosts
+			then
+				echo $"ERROR: Not able to write in /mnt/c/Windows/System32/drivers/etc/hosts (Hint: Try running Bash as administrator)"
+			else
+				echo -e $"Host added to /mnt/c/Windows/System32/drivers/etc/hosts file \n"
+			fi
+		fi
+
 		if [ "$owner" == "" ]; then
-			chown -R $(whoami):$(whoami) $rootDir
+			iam=$(whoami)
+			if [ "$iam" == "root" ]; then
+				chown -R $apacheUser:$apacheUser $rootDir
+			else
+				chown -R $iam:$iam $rootDir
+			fi
 		else
 			chown -R $owner:$owner $rootDir
 		fi
@@ -126,6 +143,13 @@ if [ "$action" == 'create' ]
 			### Delete domain in /etc/hosts
 			newhost=${domain//./\\.}
 			sed -i "/$newhost/d" /etc/hosts
+
+			### Delete domain in /mnt/c/Windows/System32/drivers/etc/hosts (Windows Subsytem for Linux)
+			if [ -e /mnt/c/Windows/System32/drivers/etc/hosts ]
+			then
+				newhost=${domain//./\\.}
+				sed -i "/$newhost/d" /mnt/c/Windows/System32/drivers/etc/hosts
+			fi
 
 			### disable website
 			a2dissite $domain
