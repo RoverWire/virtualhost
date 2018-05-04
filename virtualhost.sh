@@ -23,7 +23,7 @@ fi
 
 if [ "$action" != 'create' ] && [ "$action" != 'delete' ] && [ "$action" != 'create-proxy' ]
 	then
-		echo $"You need to prompt for action (create or delete) -- Lower-case only"
+		echo $"You need to prompt for action (create or create-proxy or delete) -- Lower-case only"
 		exit 1;
 fi
 
