@@ -1,3 +1,5 @@
+This script has been altered for support with CentOS7 systems. 
+
 Virtualhost Manage Script
 ===========
 
