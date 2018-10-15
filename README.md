@@ -1,9 +1,9 @@
-This script has been altered for support with CentOS7 systems. 
+
 
 Virtualhost Manage Script
 ===========
 
-Bash Script to allow create or delete apache/nginx virtual hosts on Ubuntu on a quick way.
+This script has been altered for support with CentOS7 
 
 ## Installation ##
 
