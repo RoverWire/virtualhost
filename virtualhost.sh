@@ -5,7 +5,8 @@ TEXTDOMAIN=virtualhost
 ### Set default parameters
 action=$1
 domain=$2
-rootDir=$3
+port=$3
+rootDir=$4
 owner=$(who am i | awk '{print $1}')
 apacheUser=$(ps -ef | egrep '(httpd|apache2|apache)' | grep -v root | head -n1 | awk '{print $1}')
 email='webmaster@localhost'
@@ -32,6 +33,10 @@ do
 	echo -e $"Please provide domain. e.g.dev,staging"
 	read domain
 done
+
+if [ "$port" == "" ]; then
+	port='80'
+fi
 
 if [ "$rootDir" == "" ]; then
 	rootDir=${domain//./}
@@ -70,7 +75,7 @@ if [ "$action" == 'create' ]
 
 		### create virtual host rules file
 		if ! echo "
-		<VirtualHost *:80>
+		<VirtualHost *:$port>
 			ServerAdmin $email
 			ServerName $domain
 			ServerAlias $domain

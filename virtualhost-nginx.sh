@@ -5,7 +5,8 @@ TEXTDOMAIN=virtualhost
 ### Set default parameters
 action=$1
 domain=$2
-rootDir=$3
+port=$3
+rootDir=$4
 owner=$(who am i | awk '{print $1}')
 sitesEnable='/etc/nginx/sites-enabled/'
 sitesAvailable='/etc/nginx/sites-available/'
@@ -27,6 +28,10 @@ do
 	echo -e $"Please provide domain. e.g.dev,staging"
 	read domain
 done
+
+if [ "$port" == "" ]; then
+	port='80'
+fi
 
 if [ "$rootDir" == "" ]; then
 	rootDir=${domain//./}
@@ -65,7 +70,7 @@ if [ "$action" == 'create' ]
 
 		### create virtual host rules file
 		if ! echo "server {
-			listen   80;
+			listen   $port;
 			root $userDir$rootDir;
 			index index.php index.html index.htm;
 			server_name $domain;
