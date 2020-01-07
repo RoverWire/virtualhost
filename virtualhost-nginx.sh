@@ -48,25 +48,25 @@ if [ "$action" == 'create' ]
 		fi
 
 		### check if directory exists or not
-		if ! [ -d $userDir$rootDir ]; then
+		if ! [ -d $rootDir ]; then
 			### create the directory
-			mkdir $userDir$rootDir
+			mkdir $rootDir
 			### give permission to root dir
-			chmod 755 $userDir$rootDir
+			chmod 755 $rootDir
 			### write test file in the new domain dir
-			if ! echo "<?php echo phpinfo(); ?>" > $userDir$rootDir/phpinfo.php
+			if ! echo "<?php echo phpinfo(); ?>" > $rootDir/phpinfo.php
 				then
-					echo $"ERROR: Not able to write in file $userDir/$rootDir/phpinfo.php. Please check permissions."
+					echo $"ERROR: Not able to write in file $rootDir/phpinfo.php. Please check permissions."
 					exit;
 			else
-					echo $"Added content to $userDir$rootDir/phpinfo.php."
+					echo $"Added content to $rootDir/phpinfo.php."
 			fi
 		fi
 
 		### create virtual host rules file
 		if ! echo "server {
 			listen   80;
-			root $userDir$rootDir;
+			root $rootDir;
 			index index.php index.html index.htm;
 			server_name $domain;
 
@@ -135,9 +135,9 @@ if [ "$action" == 'create' ]
 		fi
 
 		if [ "$owner" == "" ]; then
-			chown -R $(whoami):www-data $userDir$rootDir
+			chown -R $(whoami):www-data $rootDir
 		else
-			chown -R $owner:www-data $userDir$rootDir
+			chown -R $owner:www-data $rootDir
 		fi
 
 		### enable website
@@ -147,7 +147,7 @@ if [ "$action" == 'create' ]
 		service nginx restart
 
 		### show the finished message
-		echo -e $"Complete! \nYou now have a new Virtual Host \nYour new host is: http://$domain \nAnd its located at $userDir$rootDir"
+		echo -e $"Complete! \nYou now have a new Virtual Host \nYour new host is: http://$domain \nAnd its located at $rootDir"
 		exit;
 	else
 		### check whether domain already exists
@@ -177,13 +177,13 @@ if [ "$action" == 'create' ]
 		fi
 
 		### check if directory exists or not
-		if [ -d $userDir$rootDir ]; then
+		if [ -d $rootDir ]; then
 			echo -e $"Delete host root directory ? (s/n)"
 			read deldir
 
 			if [ "$deldir" == 's' -o "$deldir" == 'S' ]; then
 				### Delete the directory
-				rm -rf $userDir$rootDir
+				rm -rf $rootDir
 				echo -e $"Directory deleted"
 			else
 				echo -e $"Host directory conserved"
