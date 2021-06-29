@@ -109,7 +109,7 @@ if [ "$action" == 'create' ]
 		fi
 
 		### enable website
-		cp $sitesAvailabledomain $sitesEnable/$domain.conf
+		cp $sitesAvailabledomain $sitesEnable$domain.conf
 
 		### restart Apache
         systemctl restart httpd
@@ -128,7 +128,7 @@ if [ "$action" == 'create' ]
 			sed -i "/$newhost/d" /etc/hosts
 
 			### disable website
-			rm -f $sitesEnable/$domain.conf
+			rm -f $sitesEnable$domain.conf
 
 			### restart Apache
 			systemctl restart httpd
