@@ -34,7 +34,7 @@ $ chmod +x virtualhost-nginx
 Basic command line syntax:
 
 ```bash
-$ sudo sh /path/to/virtualhost.sh [create | delete] [domain] [optional host_dir]
+$ sudo /path/to/virtualhost.sh [create | delete] [domain] [optional host_dir]
 ```
 
 With script installed on /usr/local/bin
