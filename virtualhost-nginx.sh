@@ -144,7 +144,7 @@ if [ "$action" == 'create' ]
 		ln -s $sitesAvailable$domain $sitesEnable$domain
 
 		### restart Nginx
-		service nginx restart
+		systemctl reload nginx
 
 		### show the finished message
 		echo -e $"Complete! \nYou now have a new Virtual Host \nYour new host is: http://$domain \nAnd its located at $rootDir"
@@ -170,7 +170,7 @@ if [ "$action" == 'create' ]
 			rm $sitesEnable$domain
 
 			### restart Nginx
-			service nginx restart
+			systemctl reload nginx
 
 			### Delete virtual host rules files
 			rm $sitesAvailable$domain
