@@ -1,183 +1,148 @@
 #!/bin/bash
-### Set Language
-TEXTDOMAIN=virtualhost
+set -Eeuo pipefail
 
-### Set default parameters
-action=$1
-domain=$2
-rootDir=$3
-owner=$(who am i | awk '{print $1}')
-apacheUser=$(ps -ef | egrep '(httpd|apache2|apache)' | grep -v root | head -n1 | awk '{print $1}')
-email='webmaster@localhost'
-sitesEnabled='/etc/apache2/sites-enabled/'
-sitesAvailable='/etc/apache2/sites-available/'
-userDir='/var/www/'
-sitesAvailabledomain=$sitesAvailable$domain.conf
+### =========================
+### CONFIGURACIÓN
+### =========================
 
-### don't modify from here unless you know what you are doing ####
+readonly EMAIL="webmaster@localhost"
+readonly SITES_AVAILABLE="/etc/apache2/sites-available"
+readonly USER_DIR="/var/www"
+readonly HOSTS_FILE="/etc/hosts"
+readonly APACHE_SERVICE="apache2"
 
-if [ "$(whoami)" != 'root' ]; then
-	echo $"You have no permission to run $0 as non-root user. Use sudo"
-		exit 1;
-fi
+### =========================
+### UTILIDADES
+### =========================
 
-if [ "$action" != 'create' ] && [ "$action" != 'delete' ]
-	then
-		echo $"You need to prompt for action (create or delete) -- Lower-case only"
-		exit 1;
-fi
+die() {
+  printf "ERROR: %s\n" "$1" >&2
+  exit 1
+}
 
-while [ "$domain" == "" ]
-do
-	echo -e $"Please provide domain. e.g.dev,staging"
-	read domain
+info() {
+  printf "%s\n" "$1"
+}
+
+require_root() {
+  [[ "$(id -u)" -eq 0 ]] || die "Debe ejecutarse como root (use sudo)"
+}
+
+detect_apache_user() {
+  ps -eo user,comm | awk '/(apache2|httpd)/ && $1!="root" {print $1; exit}'
+}
+
+sanitize_domain() {
+  [[ "$1" =~ ^[a-zA-Z0-9.-]+$ ]] || die "Dominio inválido"
+}
+
+add_host_entry() {
+  local domain="$1"
+  grep -q "$domain" "$HOSTS_FILE" || echo "127.0.0.1 $domain" >> "$HOSTS_FILE"
+}
+
+remove_host_entry() {
+  local domain="$1"
+  sed -i "\|$domain|d" "$HOSTS_FILE"
+}
+
+reload_apache() {
+  systemctl reload "$APACHE_SERVICE"
+}
+
+### =========================
+### PARÁMETROS
+### =========================
+
+ACTION="${1:-}"
+DOMAIN="${2:-}"
+ROOT_DIR_INPUT="${3:-}"
+
+require_root
+
+[[ "$ACTION" == "create" || "$ACTION" == "delete" ]] || \
+  die "Uso: $0 {create|delete} dominio [directorio]"
+
+while [[ -z "$DOMAIN" ]]; do
+  read -rp "Ingrese el dominio: " DOMAIN
 done
 
-if [ "$rootDir" == "" ]; then
-	rootDir=${domain//./}
-fi
+sanitize_domain "$DOMAIN"
 
-### if root dir starts with '/', don't use /var/www as default starting point
-if [[ "$rootDir" =~ ^/ ]]; then
-	userDir=''
-fi
+ROOT_DIR="${ROOT_DIR_INPUT:-${DOMAIN//./}}"
+[[ "$ROOT_DIR" == /* ]] || ROOT_DIR="$USER_DIR/$ROOT_DIR"
 
-rootDir=$userDir$rootDir
+readonly VHOST_FILE="$SITES_AVAILABLE/$DOMAIN.conf"
+readonly APACHE_USER="$(detect_apache_user)"
 
-if [ "$action" == 'create' ]
-	then
-		### check if domain already exists
-		if [ -e $sitesAvailabledomain ]; then
-			echo -e $"This domain already exists.\nPlease Try Another one"
-			exit;
-		fi
+### =========================
+### CREATE
+### =========================
 
-		### check if directory exists or not
-		if ! [ -d $rootDir ]; then
-			### create the directory
-			mkdir $rootDir
-			### give permission to root dir
-			chmod 755 $rootDir
-			### write test file in the new domain dir
-			if ! echo "<?php echo phpinfo(); ?>" > $rootDir/phpinfo.php
-			then
-				echo $"ERROR: Not able to write in file $rootDir/phpinfo.php. Please check permissions"
-				exit;
-			else
-				echo $"Added content to $rootDir/phpinfo.php"
-			fi
-		fi
+create_vhost() {
+  [[ ! -f "$VHOST_FILE" ]] || die "El dominio ya existe"
 
-		### create virtual host rules file
-		if ! echo "
-		<VirtualHost *:80>
-			ServerAdmin $email
-			ServerName $domain
-			ServerAlias $domain
-			DocumentRoot $rootDir
-			<Directory />
-				AllowOverride All
-			</Directory>
-			<Directory $rootDir>
-				Options Indexes FollowSymLinks MultiViews
-				AllowOverride all
-				Require all granted
-			</Directory>
-			ErrorLog /var/log/apache2/$domain-error.log
-			LogLevel error
-			CustomLog /var/log/apache2/$domain-access.log combined
-		</VirtualHost>" > $sitesAvailabledomain
-		then
-			echo -e $"There is an ERROR creating $domain file"
-			exit;
-		else
-			echo -e $"\nNew Virtual Host Created\n"
-		fi
+  mkdir -p "$ROOT_DIR"
+  chmod 755 "$ROOT_DIR"
 
-		### Add domain in /etc/hosts
-		if ! echo "127.0.0.1	$domain" >> /etc/hosts
-		then
-			echo $"ERROR: Not able to write in /etc/hosts"
-			exit;
-		else
-			echo -e $"Host added to /etc/hosts file \n"
-		fi
+  cat > "$ROOT_DIR/phpinfo.php" <<EOF
+<?php phpinfo(); ?>
+EOF
 
-		### Add domain in /mnt/c/Windows/System32/drivers/etc/hosts (Windows Subsytem for Linux)
-		if [ -e /mnt/c/Windows/System32/drivers/etc/hosts ]
-		then
-			if ! echo -e "\r127.0.0.1       $domain\r::1		$domain" >> /mnt/c/Windows/System32/drivers/etc/hosts
-			then
-				echo $"ERROR: Not able to write in /mnt/c/Windows/System32/drivers/etc/hosts (Hint: Try running Bash as administrator)"
-			else
-				echo -e $"Host added to /mnt/c/Windows/System32/drivers/etc/hosts file \n"
-			fi
-		fi
+  cat > "$VHOST_FILE" <<EOF
+<VirtualHost *:80>
+  ServerAdmin $EMAIL
+  ServerName $DOMAIN
+  DocumentRoot $ROOT_DIR
 
-		if [ "$owner" == "" ]; then
-			iam=$(whoami)
-			if [ "$iam" == "root" ]; then
-				chown -R $apacheUser:$apacheUser $rootDir
-			else
-				chown -R $iam:$iam $rootDir
-			fi
-		else
-			chown -R $owner:$owner $rootDir
-		fi
+  <Directory $ROOT_DIR>
+    AllowOverride All
+    Require all granted
+  </Directory>
 
-		### enable website
-		a2ensite $domain
+  ErrorLog \${APACHE_LOG_DIR}/${DOMAIN}-error.log
+  CustomLog \${APACHE_LOG_DIR}/${DOMAIN}-access.log combined
+</VirtualHost>
+EOF
 
-		### restart Apache
-		/etc/init.d/apache2 reload
+  add_host_entry "$DOMAIN"
 
-		### show the finished message
-		echo -e $"Complete! \nYou now have a new Virtual Host \nYour new host is: http://$domain \nAnd its located at $rootDir"
-		exit;
-	else
-		### check whether domain already exists
-		if ! [ -e $sitesAvailabledomain ]; then
-			echo -e $"This domain does not exist.\nPlease try another one"
-			exit;
-		else
-			### Delete domain in /etc/hosts
-			newhost=${domain//./\\.}
-			sed -i "/$newhost/d" /etc/hosts
+  chown -R "${APACHE_USER:-www-data}:${APACHE_USER:-www-data}" "$ROOT_DIR"
 
-			### Delete domain in /mnt/c/Windows/System32/drivers/etc/hosts (Windows Subsytem for Linux)
-			if [ -e /mnt/c/Windows/System32/drivers/etc/hosts ]
-			then
-				newhost=${domain//./\\.}
-				sed -i "/$newhost/d" /mnt/c/Windows/System32/drivers/etc/hosts
-			fi
+  a2ensite "$DOMAIN" >/dev/null
+  reload_apache
 
-			### disable website
-			a2dissite $domain
+  info "VirtualHost creado: http://$DOMAIN"
+  info "Directorio: $ROOT_DIR"
+}
 
-			### restart Apache
-			/etc/init.d/apache2 reload
+### =========================
+### DELETE
+### =========================
 
-			### Delete virtual host rules files
-			rm $sitesAvailabledomain
-		fi
+delete_vhost() {
+  [[ -f "$VHOST_FILE" ]] || die "El dominio no existe"
 
-		### check if directory exists or not
-		if [ -d $rootDir ]; then
-			echo -e $"Delete host root directory ? (y/n)"
-			read deldir
+  remove_host_entry "$DOMAIN"
 
-			if [ "$deldir" == 'y' -o "$deldir" == 'Y' ]; then
-				### Delete the directory
-				rm -rf $rootDir
-				echo -e $"Directory deleted"
-			else
-				echo -e $"Host directory conserved"
-			fi
-		else
-			echo -e $"Host directory not found. Ignored"
-		fi
+  a2dissite "$DOMAIN" >/dev/null
+  reload_apache
 
-		### show the finished message
-		echo -e $"Complete!\nYou just removed Virtual Host $domain"
-		exit 0;
-fi
+  rm -f "$VHOST_FILE"
+
+  if [[ -d "$ROOT_DIR" ]]; then
+    read -rp "¿Eliminar directorio $ROOT_DIR? (y/N): " confirm
+    [[ "$confirm" =~ ^[Yy]$ ]] && rm -rf "$ROOT_DIR"
+  fi
+
+  info "VirtualHost eliminado: $DOMAIN"
+}
+
+### =========================
+### MAIN
+### =========================
+
+case "$ACTION" in
+  create) create_vhost ;;
+  delete) delete_vhost ;;
+esac
