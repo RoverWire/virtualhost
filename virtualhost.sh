@@ -3,14 +3,12 @@ set -Eeuo pipefail
 
 
 # =========================
-# CONFIGURATION
+# BASE CONFIGURATION
 # =========================
 
 readonly EMAIL="webmaster@localhost"
-readonly SITES_AVAILABLE="/etc/apache2/sites-available"
 readonly USER_DIR="/var/www"
 readonly HOSTS_FILE="/etc/hosts"
-readonly APACHE_SERVICE="apache2"
 
 # =========================
 # UTILS
@@ -26,7 +24,7 @@ info() {
 }
 
 require_root() {
-  [[ "$(id -u)" -eq 0 ]] || die "Debe ejecutarse como root (use sudo)"
+  [[ "$(id -u)" -eq 0 ]] || die "Must be run as root (use sudo)"
 }
 
 detect_apache_user() {
@@ -34,7 +32,7 @@ detect_apache_user() {
 }
 
 sanitize_domain() {
-  [[ "$1" =~ ^[a-zA-Z0-9.-]+$ ]] || die "Dominio inválido"
+  [[ "$1" =~ ^[a-zA-Z0-9.-]+$ ]] || die "Invalid domain name: $1"
 }
 
 is_root_domain() {
@@ -84,6 +82,23 @@ wsl_check() {
 }
 
 # =========================
+# ENVIRONMENT SETUP BY DISTRO
+# =========================
+readonly DISTRO_FAMILY="$(get_distro_family)"
+readonly IS_WSL="$(wsl_check)"
+
+if [[ "$DISTRO_FAMILY" == "rhel" ]]; then
+  readonly APACHE_SERVICE="httpd"
+  readonly SITES_AVAILABLE="/etc/httpd/sites-available"
+elif [[ "$DISTRO_FAMILY" == "debian" ]]; then
+  readonly APACHE_SERVICE="apache2"
+  readonly SITES_AVAILABLE="/etc/apache2/sites-available"
+else
+  die "Unsupported Linux distribution. Only Debian-based and RHEL-based distros are supported."
+fi
+
+
+# =========================
 # HOSTS MANAGEMENT
 # =========================
 
@@ -122,16 +137,16 @@ CANONICAL="${5:-root}"
 require_root
 
 [[ "$ACTION" == "create" || "$ACTION" == "delete" ]] || \
-  die "Uso: $0 {create|delete} dominio [root_dir] [is_subdomain] [canonical]"
+  die "Use: $0 {create|delete} domain [root_dir] [is_subdomain] [canonical]"
 
 while [[ -z "$DOMAIN" ]]; do
-  read -rp "Ingrese el dominio: " DOMAIN
+  read -rp "Type domain: " DOMAIN
 done
 
 sanitize_domain "$DOMAIN"
 
-case "$IS_SUBDOMAIN" in true|false) ;; *) die "is_subdomain debe ser true o false" ;; esac
-case "$CANONICAL" in root|www) ;; *) die "canonical debe ser root o www" ;; esac
+case "$IS_SUBDOMAIN" in true|false) ;; *) die "is_subdomain must be true or false" ;; esac
+case "$CANONICAL" in root|www) ;; *) die "canonical must be root or www" ;; esac
 
 ROOT_DIR="${ROOT_DIR_INPUT:-${DOMAIN//./}}"
 [[ "$ROOT_DIR" == /* ]] || ROOT_DIR="$USER_DIR/$ROOT_DIR"
@@ -144,7 +159,7 @@ readonly APACHE_USER="$(detect_apache_user)"
 # =========================
 
 create_vhost() {
-  [[ ! -f "$VHOST_FILE" ]] || die "El dominio ya existe"
+  [[ ! -f "$VHOST_FILE" ]] || die "Domain already exists"
 
   mkdir -p "$ROOT_DIR"
   chmod 755 "$ROOT_DIR"
@@ -219,7 +234,7 @@ EOF
   a2ensite "$DOMAIN" >/dev/null
   reload_apache
 
-  info "VirtualHost creado: http://$CANONICAL_DOMAIN"
+  info "VirtualHost created: http://$CANONICAL_DOMAIN"
 }
 
 # =========================
@@ -233,7 +248,7 @@ load_metadata() {
 }
 
 delete_vhost() {
-  [[ -f "$VHOST_FILE" ]] || die "El dominio no existe"
+  [[ -f "$VHOST_FILE" ]] || die "The specified domain does not exist."
 
   load_metadata
 
@@ -245,11 +260,11 @@ delete_vhost() {
   rm -f "$VHOST_FILE"
 
   if [[ -d "$ROOT_DIR" ]]; then
-    read -rp "¿Eliminar directorio $ROOT_DIR? (y/N): " confirm
+    read -rp "Delete directory $ROOT_DIR? (y/N): " confirm
     [[ "$confirm" =~ ^[Yy]$ ]] && rm -rf "$ROOT_DIR"
   fi
 
-  info "VirtualHost eliminado: $DOMAIN"
+  info "VirtualHost deleted: $DOMAIN"
 }
 
 # =========================
