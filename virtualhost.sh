@@ -3,7 +3,7 @@ set -Eeuo pipefail
 
 
 # =========================
-# CONFIGURACIÓN
+# CONFIGURATION
 # =========================
 
 readonly EMAIL="webmaster@localhost"
@@ -13,7 +13,7 @@ readonly HOSTS_FILE="/etc/hosts"
 readonly APACHE_SERVICE="apache2"
 
 # =========================
-# UTILIDADES
+# UTILS
 # =========================
 
 die() {
@@ -45,6 +45,44 @@ reload_apache() {
   systemctl reload "$APACHE_SERVICE"
 }
 
+get_distro_family() {
+  if [ -f /etc/os-release ]; then
+      . /etc/os-release
+
+      case "$ID" in
+          ubuntu|debian)
+              echo "debian"
+              ;;
+          centos|rhel|rocky|almalinux|fedora)
+              echo "rhel"
+              ;;
+          *)
+              if [[ "$ID_LIKE" == *"debian"* ]]; then
+                  echo "debian"
+              elif [[ "$ID_LIKE" == *"rhel"* ]]; then
+                  echo "rhel"
+              else
+                  echo "unknown"
+              fi
+              ;;
+      esac
+  else
+      echo "unknown"
+  fi
+}
+
+wsl_check() {
+  local is_wsl="false"
+
+  if grep -qi "microsoft" /proc/version 2>/dev/null; then
+      is_wsl="true"
+  elif grep -qi "microsoft" /proc/sys/kernel/osrelease 2>/dev/null; then
+      is_wsl="true"
+  fi
+
+  echo "$is_wsl"
+}
+
 # =========================
 # HOSTS MANAGEMENT
 # =========================
@@ -72,7 +110,7 @@ remove_host_entry() {
 }
 
 # =========================
-# PARÁMETROS
+# PARAMETERS & VALIDATION
 # =========================
 
 ACTION="${1:-}"
