@@ -1,183 +1,343 @@
-#!/bin/bash
-### Set Language
-TEXTDOMAIN=virtualhost
+#!/usr/bin/env bash
+set -Eeuo pipefail
 
-### Set default parameters
-action=$1
-domain=$2
-rootDir=$3
-owner=$(who am i | awk '{print $1}')
-apacheUser=$(ps -ef | egrep '(httpd|apache2|apache)' | grep -v root | head -n1 | awk '{print $1}')
-email='webmaster@localhost'
-sitesEnabled='/etc/apache2/sites-enabled/'
-sitesAvailable='/etc/apache2/sites-available/'
-userDir='/var/www/'
-sitesAvailabledomain=$sitesAvailable$domain.conf
+# =========================
+# BASE CONFIGURATION
+# =========================
 
-### don't modify from here unless you know what you are doing ####
+readonly EMAIL="webmaster@localhost"
+readonly USER_DIR="/var/www"
+readonly HOSTS_FILE="/etc/hosts"
+readonly WSL_HOSTS_FILE="/mnt/c/Windows/System32/drivers/etc/hosts"
 
-if [ "$(whoami)" != 'root' ]; then
-	echo $"You have no permission to run $0 as non-root user. Use sudo"
-		exit 1;
+# =========================
+# SYSTEM DETECTION
+# =========================
+
+get_distro_family() {
+  [[ -f /etc/os-release ]] || { echo "unknown"; return; }
+  . /etc/os-release
+
+  case "$ID" in
+    ubuntu|debian) echo "debian" ;;
+    centos|rhel|rocky|almalinux|fedora) echo "rhel" ;;
+    *)
+      [[ "${ID_LIKE:-}" == *debian* ]] && echo "debian" && return
+      [[ "${ID_LIKE:-}" == *rhel* ]] && echo "rhel" && return
+      echo "unknown"
+      ;;
+  esac
+}
+
+is_wsl() {
+  grep -qi microsoft /proc/version 2>/dev/null && return 0
+  grep -qi microsoft /proc/sys/kernel/osrelease 2>/dev/null && return 0
+  return 1
+}
+
+# =========================
+# UTILS
+# =========================
+
+die() {
+  printf "ERROR: %s\n" "$1" >&2
+  exit 1
+}
+
+info() {
+  printf "%s\n" "$1"
+}
+
+require_root() {
+  [[ "$(id -u)" -eq 0 ]] || die "Must be run as root (use sudo)"
+}
+
+detect_apache_user() {
+  local user
+  user=$(ps -eo user,comm | awk '/(apache2|httpd)/ && $1!="root" {print $1; exit}')
+
+  if [[ -n "$user" ]]; then
+    echo "$user"
+  elif [[ "$DISTRO_FAMILY" == "debian" ]]; then
+    echo "www-data"
+  else
+    echo "apache"
+  fi
+}
+
+sanitize_domain() {
+  local domain="$1"
+
+  [[ ${#domain} -le 253 ]] || die "Domain too long"
+
+  if [[ ! "$domain" =~ ^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$ ]]; then
+    die "Invalid domain name: $domain"
+  fi
+}
+
+is_root_domain() {
+  [[ "$(awk -F. '{print NF}' <<< "$1")" -eq 2 ]]
+}
+
+reload_apache() {
+  if [[ "$IS_WSL" == "true" ]]; then
+    apachectl -k graceful
+  else
+    systemctl reload "$APACHE_SERVICE"
+  fi
+}
+
+is_dir_empty() {
+  local dir="$1"
+
+  [[ -d "$dir" ]] || return 2
+
+  shopt -s nullglob dotglob
+  local files=("$dir"/*)
+  shopt -u nullglob dotglob
+
+  (( ${#files[@]} == 0 ))
+}
+
+enable_host() {
+  if [[ "$DISTRO_FAMILY" == "debian" ]]; then
+    # Activate rewrite module if not already enabled
+    # (required for canonical redirection)
+    if ! a2query -m rewrite >/dev/null 2>&1; then
+      a2enmod rewrite >/dev/null
+    fi
+
+    a2ensite "$DOMAIN" >/dev/null
+  fi
+
+  apachectl configtest || die "Apache configuration test failed"
+}
+
+disable_host() {
+  if [[ "$DISTRO_FAMILY" == "debian" ]]; then
+    a2dissite "$DOMAIN" >/dev/null
+  elif [[ "$DISTRO_FAMILY" == "rhel" ]]; then
+    rm -f "$SITES_ENABLED/$DOMAIN.conf"
+  fi
+}
+
+# =========================
+# ENVIRONMENT SETUP BY DISTRO
+# =========================
+readonly DISTRO_FAMILY="$(get_distro_family)"
+readonly IS_WSL="$(is_wsl && echo true || echo false)"
+
+if [[ "$DISTRO_FAMILY" == "rhel" ]]; then
+  readonly APACHE_SERVICE="httpd"
+  readonly SITES_AVAILABLE="/etc/httpd/conf.d"
+  readonly SITES_ENABLED="/etc/httpd/conf.d"
+elif [[ "$DISTRO_FAMILY" == "debian" ]]; then
+  readonly APACHE_SERVICE="apache2"
+  readonly SITES_AVAILABLE="/etc/apache2/sites-available"
+  readonly SITES_ENABLED="/etc/apache2/sites-enabled"
+else
+  die "Unsupported Linux distribution. Only Debian-based and RHEL-based distros are supported."
 fi
 
-if [ "$action" != 'create' ] && [ "$action" != 'delete' ]
-	then
-		echo $"You need to prompt for action (create or delete) -- Lower-case only"
-		exit 1;
-fi
+# =========================
+# HOSTS MANAGEMENT
+# =========================
 
-while [ "$domain" == "" ]
-do
-	echo -e $"Please provide domain. e.g.dev,staging"
-	read domain
+add_host_entry() {
+  local domain="$1"
+
+  grep -q "[[:space:]]$domain\$" "$HOSTS_FILE" || \
+    echo "127.0.0.1 $domain" >> "$HOSTS_FILE"
+
+  if [[ "$IS_SUBDOMAIN" == "false" ]] && is_root_domain "$domain"; then
+    grep -q "[[:space:]]www.$domain\$" "$HOSTS_FILE" || \
+      echo "127.0.0.1 www.$domain" >> "$HOSTS_FILE"
+  fi
+
+  if [[ "$IS_WSL" == "true" && -w "$WSL_HOSTS_FILE" ]]; then
+    echo "127.0.0.1 $domain" >> "$WSL_HOSTS_FILE"
+    if [[ "$IS_SUBDOMAIN" == "false" ]] && is_root_domain "$domain"; then
+      echo "127.0.0.1 www.$domain" >> "$WSL_HOSTS_FILE"
+    fi
+  fi
+}
+
+remove_host_entry() {
+  local domain="$1"
+
+  sed -i "\|[[:space:]]$domain\$|d" "$HOSTS_FILE"
+
+  if [[ "$IS_SUBDOMAIN" == "false" ]] && is_root_domain "$domain"; then
+    sed -i "\|[[:space:]]www.$domain\$|d" "$HOSTS_FILE"
+  fi
+
+  if [[ "$IS_WSL" == "true" && -w "$WSL_HOSTS_FILE" ]]; then
+    sed -i "\|[[:space:]]$domain\$|d" "$WSL_HOSTS_FILE"
+    if [[ "$IS_SUBDOMAIN" == "false" ]] && is_root_domain "$domain"; then
+      sed -i "\|[[:space:]]www.$domain\$|d" "$WSL_HOSTS_FILE"
+    fi
+  fi
+}
+
+# =========================
+# PARAMETERS & VALIDATION
+# =========================
+
+ACTION="${1:-}"
+DOMAIN="${2:-}"
+ROOT_DIR_INPUT="${3:-}"
+IS_SUBDOMAIN="${4:-false}"
+CANONICAL="${5:-root}"
+
+# force domain name downcase 
+# for consistency
+DOMAIN="${DOMAIN,,}"
+
+require_root
+
+[[ "$ACTION" == "create" || "$ACTION" == "delete" ]] || \
+  die "Use: $0 {create|delete} domain [root_dir] [is_subdomain] [canonical]"
+
+while [[ -z "$DOMAIN" ]]; do
+  read -rp "Type domain: " DOMAIN
 done
 
-if [ "$rootDir" == "" ]; then
-	rootDir=${domain//./}
-fi
+sanitize_domain "$DOMAIN"
 
-### if root dir starts with '/', don't use /var/www as default starting point
-if [[ "$rootDir" =~ ^/ ]]; then
-	userDir=''
-fi
+case "$IS_SUBDOMAIN" in true|false) ;; *) die "is_subdomain must be true or false" ;; esac
+case "$CANONICAL" in root|www) ;; *) die "canonical must be root or www" ;; esac
 
-rootDir=$userDir$rootDir
+ROOT_DIR="${ROOT_DIR_INPUT:-${DOMAIN//./}}"
+[[ "$ROOT_DIR" == /* ]] || ROOT_DIR="$USER_DIR/$ROOT_DIR"
 
-if [ "$action" == 'create' ]
-	then
-		### check if domain already exists
-		if [ -e $sitesAvailabledomain ]; then
-			echo -e $"This domain already exists.\nPlease Try Another one"
-			exit;
-		fi
+readonly VHOST_FILE="$SITES_AVAILABLE/$DOMAIN.conf"
+readonly APACHE_USER="$(detect_apache_user)"
 
-		### check if directory exists or not
-		if ! [ -d $rootDir ]; then
-			### create the directory
-			mkdir $rootDir
-			### give permission to root dir
-			chmod 755 $rootDir
-			### write test file in the new domain dir
-			if ! echo "<?php echo phpinfo(); ?>" > $rootDir/phpinfo.php
-			then
-				echo $"ERROR: Not able to write in file $rootDir/phpinfo.php. Please check permissions"
-				exit;
-			else
-				echo $"Added content to $rootDir/phpinfo.php"
-			fi
-		fi
+# =========================
+# CREATE
+# =========================
 
-		### create virtual host rules file
-		if ! echo "
-		<VirtualHost *:80>
-			ServerAdmin $email
-			ServerName $domain
-			ServerAlias $domain
-			DocumentRoot $rootDir
-			<Directory />
-				AllowOverride All
-			</Directory>
-			<Directory $rootDir>
-				Options Indexes FollowSymLinks MultiViews
-				AllowOverride all
-				Require all granted
-			</Directory>
-			ErrorLog /var/log/apache2/$domain-error.log
-			LogLevel error
-			CustomLog /var/log/apache2/$domain-access.log combined
-		</VirtualHost>" > $sitesAvailabledomain
-		then
-			echo -e $"There is an ERROR creating $domain file"
-			exit;
-		else
-			echo -e $"\nNew Virtual Host Created\n"
-		fi
+create_vhost() {
+  [[ ! -f "$VHOST_FILE" ]] || die "Domain already exists"
 
-		### Add domain in /etc/hosts
-		if ! echo "127.0.0.1	$domain" >> /etc/hosts
-		then
-			echo $"ERROR: Not able to write in /etc/hosts"
-			exit;
-		else
-			echo -e $"Host added to /etc/hosts file \n"
-		fi
+  if [[ ! -d "$ROOT_DIR" ]]; then
+    mkdir -p "$ROOT_DIR"
+    chmod 755 "$ROOT_DIR"
+  fi
 
-		### Add domain in /mnt/c/Windows/System32/drivers/etc/hosts (Windows Subsytem for Linux)
-		if [ -e /mnt/c/Windows/System32/drivers/etc/hosts ]
-		then
-			if ! echo -e "\r127.0.0.1       $domain\r::1		$domain" >> /mnt/c/Windows/System32/drivers/etc/hosts
-			then
-				echo $"ERROR: Not able to write in /mnt/c/Windows/System32/drivers/etc/hosts (Hint: Try running Bash as administrator)"
-			else
-				echo -e $"Host added to /mnt/c/Windows/System32/drivers/etc/hosts file \n"
-			fi
-		fi
+  if [[is_dir_empty "$ROOT_DIR" ]]; then
+    cat > "$ROOT_DIR/index.html" <<EOF
+<html><body><h1>Welcome to $DOMAIN</h1></body></html>
+EOF
+    cat > "$ROOT_DIR/phpinfo.php" <<EOF
+<?php phpinfo(); ?>
+EOF
+  fi
 
-		if [ "$owner" == "" ]; then
-			iam=$(whoami)
-			if [ "$iam" == "root" ]; then
-				chown -R $apacheUser:$apacheUser $rootDir
-			else
-				chown -R $iam:$iam $rootDir
-			fi
-		else
-			chown -R $owner:$owner $rootDir
-		fi
+  # Canonical domain
+  CANONICAL_DOMAIN="$DOMAIN"
+  if [[ "$IS_SUBDOMAIN" == "false" ]] && is_root_domain "$DOMAIN" && [[ "$CANONICAL" == "www" ]]; then
+    CANONICAL_DOMAIN="www.$DOMAIN"
+  fi
 
-		### enable website
-		a2ensite $domain
+  cat > "$VHOST_FILE" <<EOF
+# === METADATA ===
+# is_subdomain=$IS_SUBDOMAIN
+# canonical=$CANONICAL
+# root_dir=$ROOT_DIR
+# === /METADATA ===
 
-		### restart Apache
-		/etc/init.d/apache2 reload
+<VirtualHost *:80>
+  ServerAdmin $EMAIL
+  ServerName $CANONICAL_DOMAIN
+EOF
 
-		### show the finished message
-		echo -e $"Complete! \nYou now have a new Virtual Host \nYour new host is: http://$domain \nAnd its located at $rootDir"
-		exit;
-	else
-		### check whether domain already exists
-		if ! [ -e $sitesAvailabledomain ]; then
-			echo -e $"This domain does not exist.\nPlease try another one"
-			exit;
-		else
-			### Delete domain in /etc/hosts
-			newhost=${domain//./\\.}
-			sed -i "/$newhost/d" /etc/hosts
+  if [[ "$IS_SUBDOMAIN" == "false" ]] && is_root_domain "$DOMAIN"; then
+    if [[ "$CANONICAL" == "www" ]]; then
+      echo "  ServerAlias $DOMAIN" >> "$VHOST_FILE"
+    else
+      echo "  ServerAlias www.$DOMAIN" >> "$VHOST_FILE"
+    fi
+  fi
 
-			### Delete domain in /mnt/c/Windows/System32/drivers/etc/hosts (Windows Subsytem for Linux)
-			if [ -e /mnt/c/Windows/System32/drivers/etc/hosts ]
-			then
-				newhost=${domain//./\\.}
-				sed -i "/$newhost/d" /mnt/c/Windows/System32/drivers/etc/hosts
-			fi
+  cat >> "$VHOST_FILE" <<EOF
 
-			### disable website
-			a2dissite $domain
+  DocumentRoot $ROOT_DIR
 
-			### restart Apache
-			/etc/init.d/apache2 reload
+  <Directory $ROOT_DIR>
+    AllowOverride All
+    Require all granted
+  </Directory>
 
-			### Delete virtual host rules files
-			rm $sitesAvailabledomain
-		fi
+  RewriteEngine On
+EOF
 
-		### check if directory exists or not
-		if [ -d $rootDir ]; then
-			echo -e $"Delete host root directory ? (y/n)"
-			read deldir
+  if [[ "$IS_SUBDOMAIN" == "false" ]] && is_root_domain "$DOMAIN"; then
+    if [[ "$CANONICAL" == "www" ]]; then
+      cat >> "$VHOST_FILE" <<EOF
+  RewriteCond %{HTTP_HOST} ^$DOMAIN\$ [NC]
+  RewriteRule ^(.*)$ http://www.$DOMAIN/\$1 [R=301,L]
+EOF
+    else
+      cat >> "$VHOST_FILE" <<EOF
+  RewriteCond %{HTTP_HOST} ^www\\.$DOMAIN\$ [NC]
+  RewriteRule ^(.*)$ http://$DOMAIN/\$1 [R=301,L]
+EOF
+    fi
+  fi
 
-			if [ "$deldir" == 'y' -o "$deldir" == 'Y' ]; then
-				### Delete the directory
-				rm -rf $rootDir
-				echo -e $"Directory deleted"
-			else
-				echo -e $"Host directory conserved"
-			fi
-		else
-			echo -e $"Host directory not found. Ignored"
-		fi
+  cat >> "$VHOST_FILE" <<EOF
 
-		### show the finished message
-		echo -e $"Complete!\nYou just removed Virtual Host $domain"
-		exit 0;
-fi
+  ErrorLog \${APACHE_LOG_DIR}/${DOMAIN}-error.log
+  CustomLog \${APACHE_LOG_DIR}/${DOMAIN}-access.log combined
+</VirtualHost>
+EOF
+
+  add_host_entry "$DOMAIN"
+
+  chown -R "${APACHE_USER:-www-data}:${APACHE_USER:-www-data}" "$ROOT_DIR" 2>/dev/null || true
+
+  enable_host
+  reload_apache
+
+  info "VirtualHost created: http://$CANONICAL_DOMAIN"
+}
+
+# =========================
+# DELETE
+# =========================
+
+load_metadata() {
+  IS_SUBDOMAIN="$(grep -oP '(?<=is_subdomain=).*' "$VHOST_FILE" || echo false)"
+  CANONICAL="$(grep -oP '(?<=canonical=).*' "$VHOST_FILE" || echo root)"
+  ROOT_DIR="$(grep -oP '(?<=root_dir=).*' "$VHOST_FILE" || echo "")"
+}
+
+delete_vhost() {
+  [[ -f "$VHOST_FILE" ]] || die "The specified domain does not exist."
+
+  load_metadata
+
+  remove_host_entry "$DOMAIN"
+
+  disable_host
+  reload_apache
+
+  rm -f "$VHOST_FILE"
+
+  if [[ -d "$ROOT_DIR" ]]; then
+    read -rp "Delete directory $ROOT_DIR? (y/N): " confirm
+    [[ "$confirm" =~ ^[Yy]$ ]] && rm -rf "$ROOT_DIR"
+  fi
+
+  info "VirtualHost deleted: $DOMAIN"
+}
+
+# =========================
+# MAIN
+# =========================
+
+case "$ACTION" in
+  create) create_vhost ;;
+  delete) delete_vhost ;;
+esac

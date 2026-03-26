@@ -1,7 +1,7 @@
-Virtualhost Manage Script
+Virtualhost Manager Script
 ===========
 
-Bash Script to allow create or delete apache/nginx virtual hosts on Ubuntu on a quick way.
+Bash Script to allow create or delete apache/nginx virtual hosts on Ubuntu on a easy way.
 
 ## Installation ##
 
@@ -12,8 +12,7 @@ Bash Script to allow create or delete apache/nginx virtual hosts on Ubuntu on a 
 $ chmod +x /path/to/virtualhost.sh
 ```
 
-3. Optional: if you want to use the script globally, then you need to copy the file to your /usr/local/bin directory, is better
-if you copy it without the .sh extension:
+3. Optional: To use the script globally, copy it to the /usr/local/bin directory. It is recommended to remove the .sh extension.
 
 ```bash
 $ sudo cp /path/to/virtualhost.sh /usr/local/bin/virtualhost
@@ -34,14 +33,19 @@ $ chmod +x virtualhost-nginx
 Basic command line syntax:
 
 ```bash
-$ sudo sh /path/to/virtualhost.sh [create | delete] [domain] [optional host_dir]
+$ sudo sh /path/to/virtualhost.sh [create | delete] [domain] [optional root_dir] [optional is_subdomain] [optional canonical]
 ```
 
 With script installed on /usr/local/bin
 
 ```bash
-$ sudo virtualhost [create | delete] [domain] [optional host_dir]
+$ sudo virtualhost [create | delete] [domain] [optional root_dir] [optional is_subdomain] [optional canonical]
 ```
+Parameters:
+- `domain` is the domain name for the virtualhost (myhomepage.com, test.local, etc)
+- `root_dir` is the path where your want to serv as domain root for your host files. If not specified it will create a new one under /var/www folder.
+- `is_subdomain` is a boolean true/false to flag when a host is subdomain.
+- `canonical` can have two possible values: www or empty, this is to add another entry in the hosts files preppending the www.
 
 ### Examples ###
 
@@ -68,6 +72,8 @@ $ sudo virtualhost delete anothersite.dev my_dir
 ```
 ### Localization
 
+WARNING: Localizations are outdated, any help to contribute to fix this is welcome.
+
 For Apache:
 
 ```bash
@@ -79,3 +85,8 @@ For NGINX:
 ```bash
 $ sudo cp /path/to/locale/<language>/virtualhost-nginx.mo /usr/share/locale/<language>/LC_MESSAGES/
 ```
+### Contributions
+
+Contributions are welcome. You can also report any issues.
+
+Thank you to [everyone who has contributed](https://github.com/RoverWire/virtualhost/graphs/contributors) over the years.
