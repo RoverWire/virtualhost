@@ -9,6 +9,7 @@ set -Eeuo pipefail
 readonly EMAIL="webmaster@localhost"
 readonly USER_DIR="/var/www"
 readonly HOSTS_FILE="/etc/hosts"
+readonly WSL_HOSTS_FILE="/mnt/c/Windows/System32/drivers/etc/hosts"
 
 # =========================
 # UTILS
@@ -112,6 +113,13 @@ add_host_entry() {
     grep -q "[[:space:]]www.$domain\$" "$HOSTS_FILE" || \
       echo "127.0.0.1 www.$domain" >> "$HOSTS_FILE"
   fi
+
+  if [[ "$IS_WSL" == "true" ]]; then
+    echo "127.0.0.1 $domain" >> "$WSL_HOSTS_FILE"
+    if [[ "$IS_SUBDOMAIN" == "false" ]] && is_root_domain "$domain"; then
+      echo "127.0.0.1 www.$domain" >> "$WSL_HOSTS_FILE"
+    fi
+  fi
 }
 
 remove_host_entry() {
@@ -121,6 +129,13 @@ remove_host_entry() {
 
   if [[ "$IS_SUBDOMAIN" == "false" ]] && is_root_domain "$domain"; then
     sed -i "\|[[:space:]]www.$domain\$|d" "$HOSTS_FILE"
+  fi
+
+  if [[ "$IS_WSL" == "true" ]]; then
+    sed -i "\|[[:space:]]$domain\$|d" "$WSL_HOSTS_FILE"
+    if [[ "$IS_SUBDOMAIN" == "false" ]] && is_root_domain "$domain"; then
+      sed -i "\|[[:space:]]www.$domain\$|d" "$WSL_HOSTS_FILE"
+    fi
   fi
 }
 
