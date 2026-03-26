@@ -132,7 +132,7 @@ add_host_entry() {
       echo "127.0.0.1 www.$domain" >> "$HOSTS_FILE"
   fi
 
-  if [[ "$IS_WSL" == "true" ]]; then
+  if [[ "$IS_WSL" == "true" && -w "$WSL_HOSTS_FILE" ]]; then
     echo "127.0.0.1 $domain" >> "$WSL_HOSTS_FILE"
     if [[ "$IS_SUBDOMAIN" == "false" ]] && is_root_domain "$domain"; then
       echo "127.0.0.1 www.$domain" >> "$WSL_HOSTS_FILE"
@@ -149,7 +149,7 @@ remove_host_entry() {
     sed -i "\|[[:space:]]www.$domain\$|d" "$HOSTS_FILE"
   fi
 
-  if [[ "$IS_WSL" == "true" ]]; then
+  if [[ "$IS_WSL" == "true" && -w "$WSL_HOSTS_FILE" ]]; then
     sed -i "\|[[:space:]]$domain\$|d" "$WSL_HOSTS_FILE"
     if [[ "$IS_SUBDOMAIN" == "false" ]] && is_root_domain "$domain"; then
       sed -i "\|[[:space:]]www.$domain\$|d" "$WSL_HOSTS_FILE"
