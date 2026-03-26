@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -Eeuo pipefail
 
 
@@ -10,6 +10,31 @@ readonly EMAIL="webmaster@localhost"
 readonly USER_DIR="/var/www"
 readonly HOSTS_FILE="/etc/hosts"
 readonly WSL_HOSTS_FILE="/mnt/c/Windows/System32/drivers/etc/hosts"
+
+# =========================
+# SYSTEM DETECTION
+# =========================
+
+get_distro_family() {
+  [[ -f /etc/os-release ]] || { echo "unknown"; return; }
+  . /etc/os-release
+
+  case "$ID" in
+    ubuntu|debian) echo "debian" ;;
+    centos|rhel|rocky|almalinux|fedora) echo "rhel" ;;
+    *)
+      [[ "${ID_LIKE:-}" == *debian* ]] && echo "debian" && return
+      [[ "${ID_LIKE:-}" == *rhel* ]] && echo "rhel" && return
+      echo "unknown"
+      ;;
+  esac
+}
+
+is_wsl() {
+  grep -qi microsoft /proc/version 2>/dev/null && return 0
+  grep -qi microsoft /proc/sys/kernel/osrelease 2>/dev/null && return 0
+  return 1
+}
 
 # =========================
 # UTILS
@@ -60,49 +85,11 @@ disable_host() {
   fi
 }
 
-get_distro_family() {
-  if [ -f /etc/os-release ]; then
-      . /etc/os-release
-
-      case "$ID" in
-          ubuntu|debian)
-              echo "debian"
-              ;;
-          centos|rhel|rocky|almalinux|fedora)
-              echo "rhel"
-              ;;
-          *)
-              if [[ "$ID_LIKE" == *"debian"* ]]; then
-                  echo "debian"
-              elif [[ "$ID_LIKE" == *"rhel"* ]]; then
-                  echo "rhel"
-              else
-                  echo "unknown"
-              fi
-              ;;
-      esac
-  else
-      echo "unknown"
-  fi
-}
-
-wsl_check() {
-  local is_wsl="false"
-
-  if grep -qi "microsoft" /proc/version 2>/dev/null; then
-      is_wsl="true"
-  elif grep -qi "microsoft" /proc/sys/kernel/osrelease 2>/dev/null; then
-      is_wsl="true"
-  fi
-
-  echo "$is_wsl"
-}
-
 # =========================
 # ENVIRONMENT SETUP BY DISTRO
 # =========================
 readonly DISTRO_FAMILY="$(get_distro_family)"
-readonly IS_WSL="$(wsl_check)"
+readonly IS_WSL="$(is_wsl && echo true || echo false)"
 
 if [[ "$DISTRO_FAMILY" == "rhel" ]]; then
   readonly APACHE_SERVICE="httpd"
