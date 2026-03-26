@@ -81,7 +81,11 @@ is_root_domain() {
 }
 
 reload_apache() {
-  systemctl reload "$APACHE_SERVICE"
+  if [[ "$IS_WSL" == "true" ]]; then
+    apachectl -k graceful
+  else
+    systemctl reload "$APACHE_SERVICE"
+  fi
 }
 
 enable_host() {
@@ -275,7 +279,7 @@ EOF
 
   add_host_entry "$DOMAIN"
 
-  chown -R "${APACHE_USER:-www-data}:${APACHE_USER:-www-data}" "$ROOT_DIR"
+  chown -R "${APACHE_USER:-www-data}:${APACHE_USER:-www-data}" "$ROOT_DIR" 2>/dev/null || true
 
   enable_host
   reload_apache
