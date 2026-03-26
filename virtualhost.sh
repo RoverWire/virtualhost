@@ -108,9 +108,6 @@ enable_host() {
     fi
 
     a2ensite "$DOMAIN" >/dev/null
-
-  elif [[ "$DISTRO_FAMILY" == "rhel" ]]; then
-    ln -sf "$SITES_AVAILABLE/$DOMAIN.conf" "$SITES_ENABLED/$DOMAIN.conf"
   fi
 
   apachectl configtest || die "Apache configuration test failed"
@@ -132,7 +129,7 @@ readonly IS_WSL="$(is_wsl && echo true || echo false)"
 
 if [[ "$DISTRO_FAMILY" == "rhel" ]]; then
   readonly APACHE_SERVICE="httpd"
-  readonly SITES_AVAILABLE="/etc/httpd/sites-available"
+  readonly SITES_AVAILABLE="/etc/httpd/conf.d"
   readonly SITES_ENABLED="/etc/httpd/conf.d"
 elif [[ "$DISTRO_FAMILY" == "debian" ]]; then
   readonly APACHE_SERVICE="apache2"
@@ -140,11 +137,6 @@ elif [[ "$DISTRO_FAMILY" == "debian" ]]; then
   readonly SITES_ENABLED="/etc/apache2/sites-enabled"
 else
   die "Unsupported Linux distribution. Only Debian-based and RHEL-based distros are supported."
-fi
-
-# On Centos/RHEL, we need to create the sites-available directory if it doesn't exist
-if [[ "$DISTRO_FAMILY" == "rhel" && ! -d "$SITES_AVAILABLE" ]]; then
-  mkdir -p "$SITES_AVAILABLE"
 fi
 
 # =========================
@@ -197,7 +189,8 @@ ROOT_DIR_INPUT="${3:-}"
 IS_SUBDOMAIN="${4:-false}"
 CANONICAL="${5:-root}"
 
-# force domain name downcase for consistency
+# force domain name downcase 
+# for consistency
 DOMAIN="${DOMAIN,,}"
 
 require_root
