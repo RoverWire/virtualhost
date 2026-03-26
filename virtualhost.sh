@@ -54,7 +54,16 @@ require_root() {
 }
 
 detect_apache_user() {
-  ps -eo user,comm | awk '/(apache2|httpd)/ && $1!="root" {print $1; exit}'
+  local user
+  user=$(ps -eo user,comm | awk '/(apache2|httpd)/ && $1!="root" {print $1; exit}')
+
+  if [[ -n "$user" ]]; then
+    echo "$user"
+  elif [[ "$DISTRO_FAMILY" == "debian" ]]; then
+    echo "www-data"
+  else
+    echo "apache"
+  fi
 }
 
 sanitize_domain() {
