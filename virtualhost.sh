@@ -101,6 +101,8 @@ enable_host() {
   elif [[ "$DISTRO_FAMILY" == "rhel" ]]; then
     ln -sf "$SITES_AVAILABLE/$DOMAIN.conf" "$SITES_ENABLED/$DOMAIN.conf"
   fi
+
+  apachectl configtest || die "Apache configuration test failed"
 }
 
 disable_host() {
