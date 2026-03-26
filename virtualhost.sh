@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-
 # =========================
 # BASE CONFIGURATION
 # =========================
@@ -86,6 +85,18 @@ reload_apache() {
   else
     systemctl reload "$APACHE_SERVICE"
   fi
+}
+
+is_dir_empty() {
+  local dir="$1"
+
+  [[ -d "$dir" ]] || return 2
+
+  shopt -s nullglob dotglob
+  local files=("$dir"/*)
+  shopt -u nullglob dotglob
+
+  (( ${#files[@]} == 0 ))
 }
 
 enable_host() {
@@ -216,12 +227,19 @@ readonly APACHE_USER="$(detect_apache_user)"
 create_vhost() {
   [[ ! -f "$VHOST_FILE" ]] || die "Domain already exists"
 
-  mkdir -p "$ROOT_DIR"
-  chmod 755 "$ROOT_DIR"
+  if [[ ! -d "$ROOT_DIR" ]]; then
+    mkdir -p "$ROOT_DIR"
+    chmod 755 "$ROOT_DIR"
+  fi
 
-  cat > "$ROOT_DIR/phpinfo.php" <<EOF
+  if [[is_dir_empty "$ROOT_DIR" ]]; then
+    cat > "$ROOT_DIR/index.html" <<EOF
+<html><body><h1>Welcome to $DOMAIN</h1></body></html>
+EOF
+    cat > "$ROOT_DIR/phpinfo.php" <<EOF
 <?php phpinfo(); ?>
 EOF
+  fi
 
   # Canonical domain
   CANONICAL_DOMAIN="$DOMAIN"
