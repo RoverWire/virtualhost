@@ -80,9 +80,16 @@ reload_apache() {
 
 enable_host() {
   if [[ "$DISTRO_FAMILY" == "debian" ]]; then
+    # Activate rewrite module if not already enabled
+    # (required for canonical redirection)
+    if ! a2query -m rewrite >/dev/null 2>&1; then
+      a2enmod rewrite >/dev/null
+    fi
+
     a2ensite "$DOMAIN" >/dev/null
+
   elif [[ "$DISTRO_FAMILY" == "rhel" ]]; then
-    ln -s "$SITES_AVAILABLE/$DOMAIN.conf" "$SITES_ENABLED/$DOMAIN.conf"
+    ln -sf "$SITES_AVAILABLE/$DOMAIN.conf" "$SITES_ENABLED/$DOMAIN.conf"
   fi
 }
 
@@ -103,7 +110,7 @@ readonly IS_WSL="$(is_wsl && echo true || echo false)"
 if [[ "$DISTRO_FAMILY" == "rhel" ]]; then
   readonly APACHE_SERVICE="httpd"
   readonly SITES_AVAILABLE="/etc/httpd/sites-available"
-  readonly SITES_ENABLED="/etc/httpd/sites-enabled"
+  readonly SITES_ENABLED="/etc/httpd/conf.d"
 elif [[ "$DISTRO_FAMILY" == "debian" ]]; then
   readonly APACHE_SERVICE="apache2"
   readonly SITES_AVAILABLE="/etc/apache2/sites-available"
@@ -112,6 +119,10 @@ else
   die "Unsupported Linux distribution. Only Debian-based and RHEL-based distros are supported."
 fi
 
+# On Centos/RHEL, we need to create the sites-available directory if it doesn't exist
+if [[ "$DISTRO_FAMILY" == "rhel" && ! -d "$SITES_AVAILABLE" ]]; then
+  mkdir -p "$SITES_AVAILABLE"
+fi
 
 # =========================
 # HOSTS MANAGEMENT
