@@ -184,6 +184,9 @@ ROOT_DIR_INPUT="${3:-}"
 IS_SUBDOMAIN="${4:-false}"
 CANONICAL="${5:-root}"
 
+# force domain name downcase for consistency
+DOMAIN="${DOMAIN,,}"
+
 require_root
 
 [[ "$ACTION" == "create" || "$ACTION" == "delete" ]] || \
