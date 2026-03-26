@@ -44,6 +44,22 @@ reload_apache() {
   systemctl reload "$APACHE_SERVICE"
 }
 
+enable_host() {
+  if [[ "$DISTRO_FAMILY" == "debian" ]]; then
+    a2ensite "$DOMAIN" >/dev/null
+  elif [[ "$DISTRO_FAMILY" == "rhel" ]]; then
+    ln -s "$SITES_AVAILABLE/$DOMAIN.conf" "$SITES_ENABLED/$DOMAIN.conf"
+  fi
+}
+
+disable_host() {
+  if [[ "$DISTRO_FAMILY" == "debian" ]]; then
+    a2dissite "$DOMAIN" >/dev/null
+  elif [[ "$DISTRO_FAMILY" == "rhel" ]]; then
+    rm -f "$SITES_ENABLED/$DOMAIN.conf"
+  fi
+}
+
 get_distro_family() {
   if [ -f /etc/os-release ]; then
       . /etc/os-release
@@ -91,9 +107,11 @@ readonly IS_WSL="$(wsl_check)"
 if [[ "$DISTRO_FAMILY" == "rhel" ]]; then
   readonly APACHE_SERVICE="httpd"
   readonly SITES_AVAILABLE="/etc/httpd/sites-available"
+  readonly SITES_ENABLED="/etc/httpd/sites-enabled"
 elif [[ "$DISTRO_FAMILY" == "debian" ]]; then
   readonly APACHE_SERVICE="apache2"
   readonly SITES_AVAILABLE="/etc/apache2/sites-available"
+  readonly SITES_ENABLED="/etc/apache2/sites-enabled"
 else
   die "Unsupported Linux distribution. Only Debian-based and RHEL-based distros are supported."
 fi
@@ -246,7 +264,7 @@ EOF
 
   chown -R "${APACHE_USER:-www-data}:${APACHE_USER:-www-data}" "$ROOT_DIR"
 
-  a2ensite "$DOMAIN" >/dev/null
+  enable_host
   reload_apache
 
   info "VirtualHost created: http://$CANONICAL_DOMAIN"
@@ -269,7 +287,7 @@ delete_vhost() {
 
   remove_host_entry "$DOMAIN"
 
-  a2dissite "$DOMAIN" >/dev/null
+  disable_host
   reload_apache
 
   rm -f "$VHOST_FILE"
