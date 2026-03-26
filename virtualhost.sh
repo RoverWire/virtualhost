@@ -67,7 +67,13 @@ detect_apache_user() {
 }
 
 sanitize_domain() {
-  [[ "$1" =~ ^[a-zA-Z0-9.-]+$ ]] || die "Invalid domain name: $1"
+  local domain="$1"
+
+  [[ ${#domain} -le 253 ]] || die "Domain too long"
+
+  if [[ ! "$domain" =~ ^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$ ]]; then
+    die "Invalid domain name: $domain"
+  fi
 }
 
 is_root_domain() {
